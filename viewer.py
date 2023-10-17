@@ -50,9 +50,9 @@ FONT = [pygame.font.Font("dogicapixelbold.ttf",x) for x in range(0,90)]
 
 STATIC_LOOKUP = {"ObjectGoalPole":"END","PlayerLocator":"START","ObjectWonderTag":"START SEED","ItemWonderFinishWonderSead":"END SEED","RetryPoint":"CHECKPOINT","ObjectTalkingFlower":"TALKING FLOWER","ObjectTalkingFlowerS":"TALKING FLOWER"}
 
-OBJECT_LOOKUP = {"ObjectMiniFlowerInAir":"MINI WONDER FLOWER","ObjectCoinYellow":"COIN","ObjectMiniLuckyCoin":"MINI WONDER COIN","ObjectCoinRandom":"WONDER COIN","ObjectBigTenLuckyCoin":"10 WONDER COIN","BlockRengaLight":"EMPTY BRICK","BlockRengaItem":"BRICK WITH COIN","BlockHatena":"? BLOCK","ObjectBlockSurpriseYellow":"HIDDEN ? BLOCK","ObjectDokan":"PIPE"}
+OBJECT_LOOKUP = {"ObjectMiniFlowerInAir":"MINI WONDER FLOWER","ObjectCoinYellow":"COIN","ObjectMiniLuckyCoin":"MINI WONDER COIN","ObjectCoinRandom":"WONDER COIN","ObjectBigTenLuckyCoin":"10 WONDER COIN","BlockRengaLight":"EMPTY BRICK","BlockRengaItem":"BRICK WITH COIN","BlockHatena":"? BLOCK","BlockClarity":"HIDDEN ? BLOCK","ObjectDokan":"PIPE"} #ObjectBlockSurpriseYellow
 
-BLOCK_LOOKUP = {"BlockRengaItem":(141,79,58),"BlockRengaLight":(141,79,58),"BlockHatena":(255,211,36),"ObjectBlockSurpriseYellow":(255,211,36,155)}
+BLOCK_LOOKUP = {"BlockRengaItem":(141,79,58),"BlockRengaLight":(141,79,58),"BlockHatena":(255,211,36),"BlockClarity":(255,211,36,155)}
 
 CIRCLE_LOOKUP = {"ObjectCoinYellow":(234,220,111)}
 
