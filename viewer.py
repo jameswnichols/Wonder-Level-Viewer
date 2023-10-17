@@ -96,6 +96,8 @@ while running:
 
     currentHoverHash = None
 
+    textHoverOffset = 0
+
     screen.fill((255,255,255))
 
     screenMinX, screenMaxX = cameraX, (cameraX + SCREEN_WIDTH)
@@ -150,7 +152,9 @@ while running:
 
             width = text.get_size()[0]
 
-            screen.blit(text,(screenX-width//2,screenY-20))
+            screen.blit(text,(screenX-width//2,screenY-20+textHoverOffset))
+
+            textHoverOffset -= 20
         
         if objectType in BLOCK_LOOKUP:
 
