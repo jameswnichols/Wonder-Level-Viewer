@@ -113,70 +113,74 @@ while running:
 
         position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
 
-        if screenMinX <= position[0] <= screenMaxX:
-            if screenMinY <= position[1] <= screenMaxY:
-                if abs(position[2]) <= UNIT_SIZE*2:
+        #Make sure its in the visible area.
+        if not (screenMinX <= position[0] <= screenMaxX):
+            continue
+        if not (screenMinY <= position[1] <= screenMaxY):
+            continue
+        if not (abs(position[2]) <= UNIT_SIZE*2):
+            continue
 
-                    screenX = position[0] - cameraX
-                    screenY = SCREEN_HEIGHT - (position[1] - cameraY)
+        screenX = position[0] - cameraX
+        screenY = SCREEN_HEIGHT - (position[1] - cameraY)
 
-                    if hash not in REVERSE_LINKS:
-                        pygame.draw.circle(screen,(255,0,0), ((screenX), (screenY)),2)
-                    else:
+        if hash not in REVERSE_LINKS:
+            pygame.draw.circle(screen,(255,0,0), ((screenX), (screenY)),2)
+        else:
 
-                        pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
+            pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
 
-                    if distanceBetween((screenX,screenY),pygame.mouse.get_pos()) < 10:
-                        currentHoverHash = hash
+        if distanceBetween((screenX,screenY),pygame.mouse.get_pos()) < 10:
+            currentHoverHash = hash
 
-                    if objectType in STATIC_LOOKUP:
-                        
-                        info = STATIC_LOOKUP[objectType]
+        if objectType in STATIC_LOOKUP:
+            
+            info = STATIC_LOOKUP[objectType]
 
-                        text = FONT[15].render(info,False,(255,0,0))
+            text = FONT[15].render(info,False,(255,0,0))
 
-                        width = text.get_size()[0]
+            width = text.get_size()[0]
 
-                        screen.blit(text,(screenX-width//2,screenY-20))
+            screen.blit(text,(screenX-width//2,screenY-20))
 
-                    elif distanceBetween((screenX,screenY),pygame.mouse.get_pos()) < 10:
-                        
-                        name = OBJECT_LOOKUP[objectType] if objectType in OBJECT_LOOKUP else objectType
+        elif distanceBetween((screenX,screenY),pygame.mouse.get_pos()) < 10:
+            
+            name = OBJECT_LOOKUP[objectType] if objectType in OBJECT_LOOKUP else objectType
 
-                        text = FONT[15].render(name,False,(255,0,0)) #+"::"+str(hash)
+            text = FONT[15].render(name,False,(255,0,0)) #+"::"+str(hash)
 
-                        width = text.get_size()[0]
+            width = text.get_size()[0]
 
-                        screen.blit(text,(screenX-width//2,screenY-20))
-                    
-                    if objectType in BLOCK_LOOKUP:
+            screen.blit(text,(screenX-width//2,screenY-20))
+        
+        if objectType in BLOCK_LOOKUP:
 
-                        block = pygame.Surface((UNIT_SIZE,UNIT_SIZE),pygame.SRCALPHA)
-                        block.fill(BLOCK_LOOKUP[objectType])
+            block = pygame.Surface((UNIT_SIZE,UNIT_SIZE),pygame.SRCALPHA)
+            block.fill(BLOCK_LOOKUP[objectType])
 
-                        screen.blit(block, (screenX, screenY))
-                    
-                    if objectType in CIRCLE_LOOKUP or objectType in SMALL_CIRCLE_LOOKUP or objectType in LARGE_CIRCLE_LOOKUP:
-                        centerX = screenX + UNIT_SIZE//2
-                        centerY = screenY + UNIT_SIZE//2
+            screen.blit(block, (screenX, screenY))
+        
+        if objectType in CIRCLE_LOOKUP or objectType in SMALL_CIRCLE_LOOKUP or objectType in LARGE_CIRCLE_LOOKUP:
+            centerX = screenX + UNIT_SIZE//2
+            centerY = screenY + UNIT_SIZE//2
 
-                        if objectType in CIRCLE_LOOKUP:
-                            radius = UNIT_SIZE//2
-                            colour = CIRCLE_LOOKUP[objectType]
-                        elif objectType in SMALL_CIRCLE_LOOKUP:
-                            radius = UNIT_SIZE//4
-                            colour = SMALL_CIRCLE_LOOKUP[objectType]
-                        elif objectType in LARGE_CIRCLE_LOOKUP:
-                            radius = UNIT_SIZE
-                            colour = LARGE_CIRCLE_LOOKUP[objectType]
+            if objectType in CIRCLE_LOOKUP:
+                radius = UNIT_SIZE//2
+                colour = CIRCLE_LOOKUP[objectType]
+            elif objectType in SMALL_CIRCLE_LOOKUP:
+                radius = UNIT_SIZE//4
+                colour = SMALL_CIRCLE_LOOKUP[objectType]
+            elif objectType in LARGE_CIRCLE_LOOKUP:
+                radius = UNIT_SIZE
+                colour = LARGE_CIRCLE_LOOKUP[objectType]
 
-                        pygame.draw.circle(screen,colour,(centerX,centerY),radius)
-                    
-                    if hash == searchHash:
-                        pygame.draw.circle(screen,(0,0,255),(screenX,screenY),4)
+            pygame.draw.circle(screen,colour,(centerX,centerY),radius)
+        
+        if hash == searchHash:
+            pygame.draw.circle(screen,(0,0,255),(screenX,screenY),4)
 
-                    if hash in searchDeleteList:
-                        pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)  
+        if hash in searchDeleteList:
+            pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)  
 
 
     for event in pygame.event.get():
