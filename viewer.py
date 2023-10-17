@@ -1,4 +1,3 @@
-import yaml
 import pygame
 import math
 import json
