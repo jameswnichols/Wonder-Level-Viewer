@@ -50,7 +50,7 @@ FONT = [pygame.font.Font("dogicapixelbold.ttf",x) for x in range(0,90)]
 
 STATIC_LOOKUP = {"ObjectGoalPole":"END","PlayerLocator":"START","ObjectWonderTag":"START SEED","ItemWonderFinishWonderSead":"END SEED","RetryPoint":"CHECKPOINT","ObjectTalkingFlower":"TALKING FLOWER","ObjectTalkingFlowerS":"TALKING FLOWER"}
 
-OBJECT_LOOKUP = {"ObjectMiniFlowerInAir":"MINI WONDER FLOWER","ObjectCoinYellow":"COIN","ObjectMiniLuckyCoin":"MINI WONDER COIN","ObjectCoinRandom":"WONDER COIN","ObjectBigTenLuckyCoin":"10 WONDER COIN","BlockRengaLight":"EMPTY BRICK","BlockRengaItem":"BRICK WITH COIN","BlockHatena":"? BLOCK","ObjectBlockSurpriseYellow":"HIDDEN ? BLOCK"}
+OBJECT_LOOKUP = {"ObjectMiniFlowerInAir":"MINI WONDER FLOWER","ObjectCoinYellow":"COIN","ObjectMiniLuckyCoin":"MINI WONDER COIN","ObjectCoinRandom":"WONDER COIN","ObjectBigTenLuckyCoin":"10 WONDER COIN","BlockRengaLight":"EMPTY BRICK","BlockRengaItem":"BRICK WITH COIN","BlockHatena":"? BLOCK","ObjectBlockSurpriseYellow":"HIDDEN ? BLOCK","ObjectDokan":"PIPE"}
 
 BLOCK_LOOKUP = {"BlockRengaItem":(141,79,58),"BlockRengaLight":(141,79,58),"BlockHatena":(255,211,36),"ObjectBlockSurpriseYellow":(255,211,36,155)}
 
@@ -131,7 +131,7 @@ while running:
 
         distanceFromMouse = distanceBetween((screenX,screenY),pygame.mouse.get_pos())
 
-        if distanceFromMouse < 10:
+        if distanceFromMouse < 5:
             currentHoverHash = hash
 
         if objectType in STATIC_LOOKUP:
@@ -144,7 +144,7 @@ while running:
 
             screen.blit(text,(screenX-width//2,screenY-20))
 
-        elif distanceFromMouse < 10:
+        elif distanceFromMouse < 5:
             
             name = OBJECT_LOOKUP[objectType] if objectType in OBJECT_LOOKUP else objectType
 
