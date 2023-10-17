@@ -81,8 +81,9 @@ for link in levelData["root"]["Links"]:
 
 for actor in levelData["root"]["Actors"]:
     objectType, position = actor["Gyaml"], actor["Translate"]
-    if "tag" in objectType.lower():
-        pass
+    if objectType == "ObjectDokan":
+        print(actor)
+
         #print(actor["Hash"])
     #print(f"{objectType} :: {position}")
 
