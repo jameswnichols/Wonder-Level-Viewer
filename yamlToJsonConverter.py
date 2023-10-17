@@ -29,6 +29,8 @@ with open("temp.yaml","w") as f:
 with open("temp.yaml","r") as f:
     yamlData = yaml.safe_load(f)
 
+os.remove("temp.yaml")
+
 newFilename = filename[:filename.rfind(".")]+".json"
 
 with open(newFilename,"w") as f:
