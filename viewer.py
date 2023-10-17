@@ -113,8 +113,8 @@ while running:
 
         position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
 
-        if position[0] >= screenMinX and position[0] <= screenMaxX:
-            if position[1] >= screenMinY and position[1] <= screenMaxY:
+        if screenMinX <= position[0] <= screenMaxX:
+            if screenMinY <= position[1] <= screenMaxY:
                 if abs(position[2]) <= UNIT_SIZE*2:
 
                     screenX = position[0] - cameraX
