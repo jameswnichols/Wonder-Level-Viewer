@@ -84,9 +84,6 @@ for actor in levelData["root"]["Actors"]:
     if objectType == "ObjectDokan":
         print(actor)
 
-        #print(actor["Hash"])
-    #print(f"{objectType} :: {position}")
-
 running = True
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -130,7 +127,9 @@ while running:
 
             pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
 
-        if distanceBetween((screenX,screenY),pygame.mouse.get_pos()) < 10:
+        distanceFromMouse = distanceBetween((screenX,screenY),pygame.mouse.get_pos())
+
+        if distanceFromMouse < 10:
             currentHoverHash = hash
 
         if objectType in STATIC_LOOKUP:
@@ -143,7 +142,7 @@ while running:
 
             screen.blit(text,(screenX-width//2,screenY-20))
 
-        elif distanceBetween((screenX,screenY),pygame.mouse.get_pos()) < 10:
+        elif distanceFromMouse < 10:
             
             name = OBJECT_LOOKUP[objectType] if objectType in OBJECT_LOOKUP else objectType
 
@@ -189,21 +188,23 @@ while running:
         
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_f:
-                if currentHoverHash in REVERSE_LINKS:
-                    print(f"Find route for :: {currentHoverHash}")
-                    searchHash, searchDeleteList = traceLinkBack(currentHoverHash)
+                if currentHoverHash not in REVERSE_LINKS:
+                    continue
 
-                    for actor in levelData["root"]["Actors"]:
-                        if actor["Hash"] == searchHash:
-                            position = actor["Translate"]
-                            position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
-                            cameraX, cameraY = position[0]-SCREEN_WIDTH//2, position[1]-SCREEN_HEIGHT//2
+                print(f"Find route for :: {currentHoverHash}")
+                searchHash, searchDeleteList = traceLinkBack(currentHoverHash)
 
-                            if actor["Gyaml"] == "FloweringCheckTag":
-                                pass
-                            break
+                for actor in levelData["root"]["Actors"]:
+                    if actor["Hash"] == searchHash:
 
-                    print(f"Route leads to :: {searchHash}")
+                        #Center the camera on the terminating actor.
+                        position = actor["Translate"]
+                        position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
+                        cameraX, cameraY = position[0]-SCREEN_WIDTH//2, position[1]-SCREEN_HEIGHT//2
+
+                        break
+
+                print(f"Route leads to :: {searchHash}")
 
     pressedKeys = pygame.key.get_pressed()
 
