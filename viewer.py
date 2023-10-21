@@ -53,7 +53,7 @@ def rotatePoint(pivotX, pivotY, x, y, angle):
 
 pygame.init()
 
-SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
+SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 720
 
 UNIT_SIZE = 32
 #Actual Size is 256
@@ -137,6 +137,10 @@ while running:
                 position = point["Translate"]
                 relativeLocation = [(position[0]*UNIT_SIZE)-cameraX+UNIT_SIZE//2,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)]
                 points.append(relativeLocation)
+
+                if distanceBetween(relativeLocation,pygame.mouse.get_pos()) < 10 and pygame.key.get_pressed()[pygame.K_m]:
+                    txt = FONT[10].render(f"{position}",False,(255,0,0))
+                    screen.blit(txt,(relativeLocation[0]-txt.get_width()//2,relativeLocation[1]-10))
             
             pygame.draw.lines(screen,(38,127,0),isClosed,points,width=4)
 
@@ -147,6 +151,9 @@ while running:
             continue
 
         position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
+
+        if objectType == "ObjectDokan":
+            position = (position[0] - UNIT_SIZE//2, position[1] + UNIT_SIZE//2, position[2])
 
         #Make sure its in the visible area.
         if not (screenMinX <= position[0] <= screenMaxX):
@@ -221,7 +228,9 @@ while running:
         if hash in searchDeleteList:
             pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)  
 
-
+        
+        outline = pygame.Rect(screenX, screenY, UNIT_SIZE, UNIT_SIZE)
+        pygame.draw.rect(screen, (255,0,0), outline, 1)
 
 
     for event in pygame.event.get():
