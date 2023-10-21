@@ -228,10 +228,11 @@ while running:
         if hash in searchDeleteList:
             pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)  
 
+        if objectType == "ObjectDokan":
+            pass
         
         outline = pygame.Rect(screenX, screenY, UNIT_SIZE, UNIT_SIZE)
         pygame.draw.rect(screen, (255,0,0), outline, 1)
-
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
