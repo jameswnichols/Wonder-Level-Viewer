@@ -67,7 +67,7 @@ searchHash = None
 
 searchDeleteList = []
 
-with open("level.json","r") as f:
+with open("Course1.json","r") as f:
     levelData = json.load(f)
 
 REVERSE_LINKS = {}
@@ -78,10 +78,10 @@ for link in levelData["root"]["Links"]:
     else:
         REVERSE_LINKS[link["Dst"]].append(link["Src"])
 
-for actor in levelData["root"]["Actors"]:
-    objectType, position = actor["Gyaml"], actor["Translate"]
-    if objectType == "ObjectDokan":
-        print(actor)
+# for actor in levelData["root"]["Actors"]:
+#     objectType, position = actor["Gyaml"], actor["Translate"]
+#     if objectType == "ObjectDokan":
+#         print(actor)
 
 running = True
 
