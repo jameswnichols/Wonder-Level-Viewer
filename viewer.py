@@ -38,6 +38,19 @@ def traceLinkBack(hash):
                 print(f"Traced Through :: {actor['Gyaml']}")
                 break
 
+def rotatePoint(pivotX, pivotY, x, y, angle):
+    sin = math.sin(angle)
+    cos = math.cos(angle)
+
+    originX = x - pivotX
+    originY = y - pivotY
+
+    newX = originX * cos - originY * sin
+    newY = originX * sin + originY * cos
+
+    return newX + pivotX, newY + pivotY
+
+
 pygame.init()
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
@@ -67,21 +80,17 @@ searchHash = None
 
 searchDeleteList = []
 
-with open("Course1.json","r") as f:
+with open("Course2.json","r") as f:
     levelData = json.load(f)
 
 REVERSE_LINKS = {}
-
-for section in levelData["root"]["BgUnits"]:
-    for wall in section["Walls"]:
-        print(wall)
 
 for link in levelData["root"]["Links"]:
     if link["Dst"] not in REVERSE_LINKS:
         REVERSE_LINKS[link["Dst"]] = [link["Src"]]
     else:
         REVERSE_LINKS[link["Dst"]].append(link["Src"])
-
+#3
 # for actor in levelData["root"]["Actors"]:
 #     objectType, position = actor["Gyaml"], actor["Translate"]
 #     if objectType == "ObjectDokan":
@@ -117,7 +126,7 @@ while running:
             points = []
             for point in rawPoints:
                 position = point["Translate"]
-                points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)])
+                points.append([(position[0]*UNIT_SIZE)-cameraX+UNIT_SIZE//2,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)])
             
             pygame.draw.polygon(screen,(127,51,0),points)
         
@@ -126,7 +135,8 @@ while running:
             points = []
             for point in floor["Points"]:
                 position = point["Translate"]
-                points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)])
+                relativeLocation = [(position[0]*UNIT_SIZE)-cameraX+UNIT_SIZE//2,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)]
+                points.append(relativeLocation)
             
             pygame.draw.lines(screen,(38,127,0),isClosed,points,width=4)
 
@@ -204,12 +214,14 @@ while running:
                 colour = LARGE_CIRCLE_LOOKUP[objectType]
 
             pygame.draw.circle(screen,colour,(centerX,centerY),radius)
-        
+
         if hash == searchHash:
             pygame.draw.circle(screen,(0,0,255),(screenX,screenY),4)
 
         if hash in searchDeleteList:
             pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)  
+
+
 
 
     for event in pygame.event.get():
@@ -251,6 +263,6 @@ while running:
     dt = clock.tick(120)
 
     fps = clock.get_fps()
-    pygame.display.set_caption(f"FPS: {round(fps,1)}")
+    pygame.display.set_caption(f"Wonder Level Viewer - FPS: {round(fps,1)}")
 
 pygame.quit()
