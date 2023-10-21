@@ -67,10 +67,14 @@ searchHash = None
 
 searchDeleteList = []
 
-with open("Course1.json","r") as f:
+with open("Course2.json","r") as f:
     levelData = json.load(f)
 
 REVERSE_LINKS = {}
+
+for section in levelData["root"]["BgUnits"]:
+    for wall in section["Walls"]:
+        print(wall)
 
 for link in levelData["root"]["Links"]:
     if link["Dst"] not in REVERSE_LINKS:
@@ -102,6 +106,34 @@ while running:
     screenMinX, screenMaxX = cameraX, (cameraX + SCREEN_WIDTH)
 
     screenMinY, screenMaxY = cameraY, (cameraY + SCREEN_HEIGHT)
+
+    for section in levelData["root"]["BgUnits"]:
+        if "BeltRails" not in section:
+            continue
+
+        for wall in section["Walls"]:
+            data = wall["ExternalRail"]
+            isClosed, rawPoints = data["IsClosed"], data["Points"]
+            points = []
+            for point in rawPoints:
+                position = point["Translate"]
+                points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)])
+            
+            pygame.draw.polygon(screen,(127,51,0),points)
+
+            #pygame.draw.lines(screen,(127,51,0),isClosed,points,width=4)
+        
+        for floor in section["BeltRails"]:
+            isClosed = floor["IsClosed"]
+            points = []
+            for point in floor["Points"]:
+                position = point["Translate"]
+                points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)])
+            
+            
+
+            pygame.draw.lines(screen,(38,127,0),isClosed,points,width=4)
+
 
     for actor in levelData["root"]["Actors"]:
         objectType, position, hash = actor["Gyaml"], actor["Translate"], actor["Hash"]
