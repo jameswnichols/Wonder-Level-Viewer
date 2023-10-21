@@ -80,7 +80,7 @@ searchHash = None
 
 searchDeleteList = []
 
-with open("Course2.json","r") as f:
+with open("Course1.json","r") as f:
     levelData = json.load(f)
 
 REVERSE_LINKS = {}
@@ -231,8 +231,9 @@ while running:
         if objectType == "ObjectDokan":
             pass
         
-        outline = pygame.Rect(screenX, screenY, UNIT_SIZE, UNIT_SIZE)
-        pygame.draw.rect(screen, (255,0,0), outline, 1)
+        if pygame.key.get_pressed()[pygame.K_o]:
+            outline = pygame.Rect(screenX, screenY, UNIT_SIZE, UNIT_SIZE)
+            pygame.draw.rect(screen, (255,0,0), outline, 1)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
