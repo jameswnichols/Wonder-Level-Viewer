@@ -80,7 +80,7 @@ searchHash = None
 
 searchDeleteList = []
 
-with open("Course1.json","r") as f:
+with open("Course2.json","r") as f:
     levelData = json.load(f)
 
 REVERSE_LINKS = {}
@@ -258,6 +258,12 @@ while running:
                         break
 
                 print(f"Route leads to :: {searchHash}")
+
+            if event.key == pygame.K_p:
+                for actor in levelData["root"]["Actors"]:
+                    if actor["Hash"] == currentHoverHash:
+                        print(actor)
+                        break
 
     pressedKeys = pygame.key.get_pressed()
 
