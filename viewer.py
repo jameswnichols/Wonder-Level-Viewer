@@ -80,7 +80,7 @@ searchHash = None
 
 searchDeleteList = []
 
-with open("Course2.json","r") as f:
+with open("Course1.json","r") as f:
     levelData = json.load(f)
 
 REVERSE_LINKS = {}
@@ -116,39 +116,40 @@ while running:
 
     screenMinY, screenMaxY = cameraY, (cameraY + SCREEN_HEIGHT)
 
-    for section in levelData["root"]["BgUnits"]:
-        if "BeltRails" not in section:
-            continue
+    if "BgUnits" in levelData["root"]:
+        for section in levelData["root"]["BgUnits"]:
+            if "BeltRails" not in section:
+                continue
 
-        for wall in section["Walls"]:
-            data = wall["ExternalRail"]
-            isClosed, rawPoints = data["IsClosed"], data["Points"]
-            points = []
-            for point in rawPoints:
-                position = point["Translate"]
-                points.append([(position[0]*UNIT_SIZE)-cameraX+UNIT_SIZE//2,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)])
+            for wall in section["Walls"]:
+                data = wall["ExternalRail"]
+                isClosed, rawPoints = data["IsClosed"], data["Points"]
+                points = []
+                for point in rawPoints:
+                    position = point["Translate"]
+                    points.append([(position[0]*UNIT_SIZE)-cameraX+UNIT_SIZE//2,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)])
+                
+                pygame.draw.polygon(screen,(127,51,0),points)
             
-            pygame.draw.polygon(screen,(127,51,0),points)
-        
-        for floor in section["BeltRails"]:
-            isClosed = floor["IsClosed"]
-            points = []
-            for point in floor["Points"]:
-                position = point["Translate"]
-                relativeLocation = [(position[0]*UNIT_SIZE)-cameraX+UNIT_SIZE//2,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)]
-                points.append(relativeLocation)
+            for floor in section["BeltRails"]:
+                isClosed = floor["IsClosed"]
+                points = []
+                for point in floor["Points"]:
+                    position = point["Translate"]
+                    relativeLocation = [(position[0]*UNIT_SIZE)-cameraX+UNIT_SIZE//2,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)]
+                    points.append(relativeLocation)
 
-                if distanceBetween(relativeLocation,pygame.mouse.get_pos()) < 10 and pygame.key.get_pressed()[pygame.K_m]:
-                    txt = FONT[10].render(f"{position}",False,(255,0,0))
-                    screen.blit(txt,(relativeLocation[0]-txt.get_width()//2,relativeLocation[1]-10))
-            
-            pygame.draw.lines(screen,(38,127,0),isClosed,points,width=4)
+                    if distanceBetween(relativeLocation,pygame.mouse.get_pos()) < 10 and pygame.key.get_pressed()[pygame.K_m]:
+                        txt = FONT[10].render(f"{position}",False,(255,0,0))
+                        screen.blit(txt,(relativeLocation[0]-txt.get_width()//2,relativeLocation[1]-10))
+                
+                pygame.draw.lines(screen,(38,127,0),isClosed,points,width=4)
 
     for actor in levelData["root"]["Actors"]:
         objectType, position, hash = actor["Gyaml"], actor["Translate"], actor["Hash"]
 
-        if objectType.startswith("MapObj"):
-            continue
+        # if objectType.startswith("MapObj"):
+        #     continue
 
         position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
 
@@ -160,7 +161,7 @@ while running:
             continue
         if not (screenMinY <= position[1] <= screenMaxY):
             continue
-        if not (abs(position[2]) <= UNIT_SIZE*2):
+        if abs(position[2]) > UNIT_SIZE*4:
             continue
 
         screenX = position[0] - cameraX
@@ -228,8 +229,17 @@ while running:
         if hash in searchDeleteList:
             pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)  
 
-        if objectType == "ObjectDokan":
-            pass
+        if objectType == "ObjectDokan" and True == False:
+            pipeHeight = actor["Scale"][1]
+            pipeAngle = actor["Rotate"][2]
+
+            actualPipeHeight = (4/3) * UNIT_SIZE * pipeHeight
+
+            rotatedX, rotatedY = rotatePoint(screenX, screenY, screenX, screenY+actualPipeHeight,pipeAngle)
+
+            pipeSurface = pygame.Surface((2 * UNIT_SIZE,actualPipeHeight))
+            pipeSurface.fill((68,161,61))
+            screen.blit(pipeSurface,(rotatedX,rotatedY))
         
         if pygame.key.get_pressed()[pygame.K_o]:
             outline = pygame.Rect(screenX, screenY, UNIT_SIZE, UNIT_SIZE)
