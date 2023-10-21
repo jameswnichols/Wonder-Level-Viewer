@@ -67,7 +67,7 @@ searchHash = None
 
 searchDeleteList = []
 
-with open("Course2.json","r") as f:
+with open("Course1.json","r") as f:
     levelData = json.load(f)
 
 REVERSE_LINKS = {}
@@ -120,8 +120,6 @@ while running:
                 points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)])
             
             pygame.draw.polygon(screen,(127,51,0),points)
-
-            #pygame.draw.lines(screen,(127,51,0),isClosed,points,width=4)
         
         for floor in section["BeltRails"]:
             isClosed = floor["IsClosed"]
@@ -130,10 +128,7 @@ while running:
                 position = point["Translate"]
                 points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)])
             
-            
-
             pygame.draw.lines(screen,(38,127,0),isClosed,points,width=4)
-
 
     for actor in levelData["root"]["Actors"]:
         objectType, position, hash = actor["Gyaml"], actor["Translate"], actor["Hash"]
@@ -254,5 +249,8 @@ while running:
 
     pygame.display.flip()
     dt = clock.tick(120)
+
+    fps = clock.get_fps()
+    pygame.display.set_caption(f"FPS: {round(fps,1)}")
 
 pygame.quit()
