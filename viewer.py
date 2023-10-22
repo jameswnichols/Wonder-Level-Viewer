@@ -341,6 +341,8 @@ while running:
                 
                 objectCache = generateObjectCache(levelData)
 
+                cameraX, cameraY = 0, 0
+
     pressedKeys = pygame.key.get_pressed()
 
     if pressedKeys[pygame.K_d]:
