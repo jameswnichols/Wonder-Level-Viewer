@@ -55,6 +55,23 @@ def rotatePoint(pivotPoint, rotatePoint, angle):
 
     return (newX + pivotX, newY + pivotY)
 
+def generatePoints(pivotPoint, scale, objectSize, isBottomMiddle = False):
+
+    centerX, centerY = pivotPoint
+
+    scaleX, scaleY = scale
+
+    sizeX, sizeY = objectSize
+
+    yAnchorOffset = ((UNIT_SIZE//2) * scaleY  * sizeY) if isBottomMiddle else 0
+    
+    xOffset = (UNIT_SIZE//2) * scaleX * sizeX
+
+    yOffset = (UNIT_SIZE//2) * scaleY * sizeY
+
+    points = [(centerX - xOffset, centerY - yOffset - yAnchorOffset),(centerX + xOffset, centerY - yOffset - yAnchorOffset), (centerX + xOffset, centerY + yOffset - yAnchorOffset), (centerX - xOffset, centerY + yOffset - yAnchorOffset)]
+
+    return points
 
 pygame.init()
 
@@ -67,15 +84,11 @@ FONT = [pygame.font.Font("dogicapixelbold.ttf",x) for x in range(0,90)]
 
 STATIC_LOOKUP = {"ObjectGoalPole":"END","PlayerLocator":"START","ObjectWonderTag":"START SEED","ItemWonderFinishWonderSead":"END SEED","RetryPoint":"CHECKPOINT","ObjectTalkingFlower":"TALKING FLOWER","ObjectTalkingFlowerS":"TALKING FLOWER"}
 
-OBJECT_LOOKUP = {"ObjectMiniFlowerInAir":"MINI WONDER FLOWER","ObjectCoinYellow":"COIN","ObjectMiniLuckyCoin":"MINI WONDER COIN","ObjectCoinRandom":"WONDER COIN","ObjectBigTenLuckyCoin":"10 WONDER COIN","BlockRengaLight":"EMPTY BRICK","BlockRengaItem":"BRICK WITH COIN","BlockHatena":"? BLOCK","BlockClarity":"HIDDEN ? BLOCK","ObjectDokan":"PIPE"} #ObjectBlockSurpriseYellow
+OBJECT_LOOKUP = {"ObjectMiniFlowerInAir":"MINI WONDER FLOWER","ObjectCoinYellow":"COIN","ObjectMiniLuckyCoin":"MINI WONDER COIN","ObjectCoinRandom":"WONDER COIN","ObjectBigTenLuckyCoin":"10 WONDER COIN","BlockRengaLight":"EMPTY BRICK","BlockRengaItem":"BRICK WITH COIN","BlockHatena":"? BLOCK","BlockClarity":"HIDDEN ? BLOCK","ObjectDokan":"PIPE"}
 
-BLOCK_LOOKUP = {"BlockRengaItem":(141,79,58),"BlockRengaLight":(141,79,58),"BlockHatena":(255,211,36),"BlockClarity":(255,211,36,155)}
+BOTTOM_ANCHOR = ["ObjectDokan"]
 
-CIRCLE_LOOKUP = {"ObjectCoinYellow":(234,220,111)}
-
-SMALL_CIRCLE_LOOKUP = {"ObjectMiniLuckyCoin":(203,87,253)}
-
-LARGE_CIRCLE_LOOKUP = {"ObjectBigTenLuckyCoin":(203,87,253)}
+OBJECT_SIZES = {"ObjectDokan" : (2, 2)}
 
 cameraX, cameraY = 0, 0
 
@@ -208,32 +221,19 @@ while running:
         if hash in searchDeleteList:
             pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)  
 
-        if objectType == "ObjectDokan" and False == True:
-            pipeHeight = actor["Scale"][1]
-            pipeAngle = actor["Rotate"][2]
-
-            actualPipeHeight = ((4/3) * UNIT_SIZE) * pipeHeight
-
-            pipeWidth = 2 * UNIT_SIZE
-
-            pivotPoint = (screenX, screenY)
-
-            points = [(screenX, screenY),(screenX, screenY - actualPipeHeight),(screenX + pipeWidth,screenY - actualPipeHeight),(screenX + pipeWidth, screenY)]
-
-            rotatedPoints = [rotatePoint(pivotPoint, point, pipeAngle) for point in points]
-
-            pygame.draw.polygon(screen, (68,161,61), rotatedPoints)
-            
-            #(68,161,61)
-            #screen.blit(pipeSurface,(rotatedX,rotatedY))
-
         #Hitboxes
             
-        objectRotation = actor["Rotate"][2]
+        objectRotation = actor["Rotate"][2] * -1
+
+        objectScaleX, objectScaleY, _ = actor["Scale"]
 
         pivotPoint = (screenX, screenY)
 
-        pointsOnOutline = [(screenX-UNIT_SIZE//2, screenY - UNIT_SIZE//2),(screenX + UNIT_SIZE//2, screenY - UNIT_SIZE//2),(screenX + UNIT_SIZE//2, screenY + UNIT_SIZE//2),(screenX - UNIT_SIZE//2, screenY + UNIT_SIZE//2)]
+        bottomAnchor = objectType in BOTTOM_ANCHOR
+
+        objectSize = OBJECT_SIZES[objectType] if objectType in OBJECT_SIZES else (1, 1)
+
+        pointsOnOutline = generatePoints(pivotPoint, (objectScaleX, objectScaleY), objectSize, bottomAnchor)#[(screenX-(UNIT_SIZE//2*objectScaleX), screenY - (UNIT_SIZE//2*objectScaleY)),(screenX + (UNIT_SIZE//2*objectScaleX), screenY - (UNIT_SIZE//2*objectScaleY)),(screenX + (UNIT_SIZE//2*objectScaleX), screenY + (UNIT_SIZE//2*objectScaleY)),(screenX - (UNIT_SIZE//2*objectScaleX), screenY + (UNIT_SIZE//2*objectScaleY))]
 
         rotatedPoints = [rotatePoint(pivotPoint, point, objectRotation) for point in pointsOnOutline]
 
