@@ -187,6 +187,8 @@ while running:
 
     screenMinY, screenMaxY = cameraY, (cameraY + SCREEN_HEIGHT)
 
+    mouseTextList = []
+
     if "BgUnits" in levelData["root"]:
         for section in levelData["root"]["BgUnits"]:
             if "BeltRails" not in section:
@@ -221,16 +223,19 @@ while running:
 
         position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
 
+        objectClipRect = objectCache[hash]["clipRect"]
+
         screenRect = pygame.Rect(cameraX, cameraY, SCREEN_WIDTH, SCREEN_HEIGHT)
+
+        #used to detect when mouse is nearby object bounding boxes.
+        mouseX, mouseY = pygame.mouse.get_pos()
+
+        mouseRect = pygame.Rect(mouseX - 2.5 + cameraX, (SCREEN_HEIGHT-mouseY) - 2.5 + cameraY, 5, 5)
         
-        if not screenRect.colliderect(objectCache[hash]["clipRect"]):
+        if not screenRect.colliderect(objectClipRect):
              continue
 
-        #Make sure its in the visible area.
-        # if not (screenMinX <= position[0] <= screenMaxX):
-        #     continue
-        # if not (screenMinY <= position[1] <= screenMaxY):
-        #     continue
+        #Get rid of background stuff.
         if abs(position[2]) > UNIT_SIZE*4:
             continue
 
@@ -243,33 +248,36 @@ while running:
 
             pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
 
-        distanceFromMouse = distanceBetween((screenX,screenY),pygame.mouse.get_pos())
+        #distanceFromMouse = distanceBetween((screenX,screenY),pygame.mouse.get_pos())
 
-        if distanceFromMouse < 5:
+        if objectClipRect.colliderect(mouseRect) and not( objectClipRect.contains(mouseRect)):
 
             currentHoverHash = hash
             
             name = objectType
 
-            text = FONT[15].render(name,False,(255,0,0)) #+"::"+str(hash)
-
-            width = text.get_size()[0]
-
-            screen.blit(text,(screenX-width//2,screenY-20+textHoverOffset))
-
-            textHoverOffset -= 20
+            mouseTextList.append(name)
 
         if hash == searchHash:
             pygame.draw.circle(screen,(0,0,255),(screenX,screenY),4)
 
         if hash in searchDeleteList:
-            pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)  
+            pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)
+
+        #Render Bounding Boxes
 
         rotatedPoints = objectCache[hash]["points"]
 
         rotatedPoints = [(x - cameraX, SCREEN_HEIGHT - (y - cameraY)) for x, y in rotatedPoints]
 
         pygame.draw.polygon(screen, (255,0,0), rotatedPoints, 1)
+
+    for i, text in enumerate(mouseTextList):
+        renderedText = FONT[15].render(text,False,(255,0,0)) #+"::"+str(hash)
+
+        width = renderedText.get_size()[0]
+
+        screen.blit(renderedText,(mouseX-width//2,mouseY - 20 - (i * 20)))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
