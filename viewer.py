@@ -237,13 +237,6 @@ while running:
 
         rotatedPoints = [rotatePoint(pivotPoint, point, objectRotation) for point in pointsOnOutline]
 
-        # furthestLeftX = min([x[0] for x in rotatedPoints])
-        # furthestUpY = min([y[1] for y in rotatedPoints])
-
-        # offsetX, offsetY = screenX - furthestLeftX, screenY - furthestUpY
-
-        # rotatedPoints = [(x+offsetX, y+offsetY) for x, y in rotatedPoints]
-
         pygame.draw.polygon(screen, (255,0,0), rotatedPoints, 1)
 
     for event in pygame.event.get():
