@@ -144,51 +144,13 @@ searchDeleteList = []
 
 clock = pygame.time.Clock()
 
-#GET FILE UPLOAD
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Wonder Level Viewer")
-gotFile = False
-runFilePreview = True
-filepath = None
 
-while runFilePreview:
-    screen.fill((0,0,0))
+levelData = None
 
-    prompt = FONT[15].render("Drag and drop x.json file here to open",False, (255,255,255))
-
-    promptX, promptY = SCREEN_WIDTH//2 - prompt.get_width()//2, SCREEN_HEIGHT//2 - prompt.get_height()//2
-
-    screen.blit(prompt, (promptX, promptY))
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            runFilePreview = False
-
-        if event.type == pygame.DROPFILE:
-            filepath = event.file
-            if filepath.split(".")[-1] == "json":
-                gotFile = True
-                runFilePreview = False
-    
-    pygame.display.flip()
-    clock.tick(60)
-
-with open(filepath,"r") as f:
-    levelData = json.load(f)
-
-REVERSE_LINKS = {}
-
-for link in levelData["root"]["Links"]:
-    if link["Dst"] not in REVERSE_LINKS:
-        REVERSE_LINKS[link["Dst"]] = [link["Src"]]
-    else:
-        REVERSE_LINKS[link["Dst"]].append(link["Src"])
-
-running = gotFile
+running = True
 
 dt = 0
-
-objectCache = generateObjectCache(levelData)
 
 while running:
 
@@ -204,89 +166,103 @@ while running:
 
     mouseTextList = []
 
-    if "BgUnits" in levelData["root"]:
-        for section in levelData["root"]["BgUnits"]:
-            if "BeltRails" not in section:
-                continue
+    #Check that a level has been loaded
+    if levelData:
+        if "BgUnits" in levelData["root"]:
+            for section in levelData["root"]["BgUnits"]:
+                if "BeltRails" not in section:
+                    continue
 
-            for wall in section["Walls"]:
-                data = wall["ExternalRail"]
-                isClosed, rawPoints = data["IsClosed"], data["Points"]
-                points = []
-                for point in rawPoints:
-                    position = point["Translate"]
-                    points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-cameraY-1)]) #+UNIT_SIZE//2 -UNIT_SIZE//2
+                for wall in section["Walls"]:
+                    data = wall["ExternalRail"]
+                    isClosed, rawPoints = data["IsClosed"], data["Points"]
+                    points = []
+                    for point in rawPoints:
+                        position = point["Translate"]
+                        points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-cameraY-1)]) #+UNIT_SIZE//2 -UNIT_SIZE//2
+                    
+                    pygame.draw.polygon(screen,(127,51,0),points)
                 
-                pygame.draw.polygon(screen,(127,51,0),points)
-            
-            for floor in section["BeltRails"]:
-                isClosed = floor["IsClosed"]
-                points = []
-                for point in floor["Points"]:
-                    position = point["Translate"]
-                    relativeLocation = [(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-cameraY-1)] #+UNIT_SIZE//2 -UNIT_SIZE//2
-                    points.append(relativeLocation)
+                for floor in section["BeltRails"]:
+                    isClosed = floor["IsClosed"]
+                    points = []
+                    for point in floor["Points"]:
+                        position = point["Translate"]
+                        relativeLocation = [(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-cameraY-1)] #+UNIT_SIZE//2 -UNIT_SIZE//2
+                        points.append(relativeLocation)
 
-                    if distanceBetween(relativeLocation,pygame.mouse.get_pos()) < 10 and pygame.key.get_pressed()[pygame.K_m]:
-                        txt = FONT[10].render(f"{position}",False,(255,0,0))
-                        screen.blit(txt,(relativeLocation[0]-txt.get_width()//2,relativeLocation[1]-10))
+                        if distanceBetween(relativeLocation,pygame.mouse.get_pos()) < 10 and pygame.key.get_pressed()[pygame.K_m]:
+                            txt = FONT[10].render(f"{position}",False,(255,0,0))
+                            screen.blit(txt,(relativeLocation[0]-txt.get_width()//2,relativeLocation[1]-10))
+                    
+                    pygame.draw.lines(screen,(38,127,0),isClosed,points,width=4)
+
+        if "Actors" in levelData["root"]:
+            for actor in levelData["root"]["Actors"]:
+                objectType, position, hash = actor["Gyaml"], actor["Translate"], actor["Hash"]
+
+                position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
+
+                objectClipRect = objectCache[hash]["clipRect"]
+
+                objectClipLines = objectCache[hash]["clipLines"]
+
+                screenRect = pygame.Rect(cameraX, cameraY, SCREEN_WIDTH, SCREEN_HEIGHT)
+
+                #used to detect when mouse is nearby object bounding boxes.
+                mouseX, mouseY = pygame.mouse.get_pos()
+
+                mouseRect = pygame.Rect(mouseX - 5 + cameraX, (SCREEN_HEIGHT-mouseY) - 5 + cameraY, 10, 10)
                 
-                pygame.draw.lines(screen,(38,127,0),isClosed,points,width=4)
+                if not screenRect.colliderect(objectClipRect):
+                    continue
 
-    for actor in levelData["root"]["Actors"]:
-        objectType, position, hash = actor["Gyaml"], actor["Translate"], actor["Hash"]
+                #Get rid of background stuff.
+                if abs(position[2]) > UNIT_SIZE*4:
+                    continue
 
-        position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
+                screenX = position[0] - cameraX
+                screenY = SCREEN_HEIGHT - (position[1] - cameraY)
 
-        objectClipRect = objectCache[hash]["clipRect"]
+                if hash not in REVERSE_LINKS:
+                    pygame.draw.circle(screen,(255,0,0), ((screenX), (screenY)),2)
+                else:
 
-        objectClipLines = objectCache[hash]["clipLines"]
+                    pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
 
-        screenRect = pygame.Rect(cameraX, cameraY, SCREEN_WIDTH, SCREEN_HEIGHT)
+                
+                #If the mouse is in the objects original box then check if it hits the lines
+                if objectClipRect.colliderect(mouseRect) and clipLines(mouseRect,objectClipLines):
+                    currentHoverHash = hash
+                    
+                    name = objectType
 
-        #used to detect when mouse is nearby object bounding boxes.
-        mouseX, mouseY = pygame.mouse.get_pos()
+                    mouseTextList.append(name)
 
-        mouseRect = pygame.Rect(mouseX - 5 + cameraX, (SCREEN_HEIGHT-mouseY) - 5 + cameraY, 10, 10)
-        
-        if not screenRect.colliderect(objectClipRect):
-             continue
+                if hash == searchHash:
+                    pygame.draw.circle(screen,(0,0,255),(screenX,screenY),4)
 
-        #Get rid of background stuff.
-        if abs(position[2]) > UNIT_SIZE*4:
-            continue
+                if hash in searchDeleteList:
+                    pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)
 
-        screenX = position[0] - cameraX
-        screenY = SCREEN_HEIGHT - (position[1] - cameraY)
+                #Render Bounding Boxes
 
-        if hash not in REVERSE_LINKS:
-            pygame.draw.circle(screen,(255,0,0), ((screenX), (screenY)),2)
-        else:
+                rotatedPoints = objectCache[hash]["points"]
 
-            pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
+                rotatedPoints = [(x - cameraX, SCREEN_HEIGHT - (y - cameraY)) for x, y in rotatedPoints]
 
-        
-        #If the mouse is in the objects original box then check if it hits the lines
-        if objectClipRect.colliderect(mouseRect) and clipLines(mouseRect,objectClipLines):
-            currentHoverHash = hash
-            
-            name = objectType
+                pygame.draw.polygon(screen, (255,0,0), rotatedPoints, 1)
+    
+    #Runs if no file is selected
+    else:
+        screen.fill((0,0,0))
 
-            mouseTextList.append(name)
+        prompt = FONT[15].render("Drag and drop x.json file here to open",False, (255,255,255))
 
-        if hash == searchHash:
-            pygame.draw.circle(screen,(0,0,255),(screenX,screenY),4)
+        promptX, promptY = SCREEN_WIDTH//2 - prompt.get_width()//2, SCREEN_HEIGHT//2 - prompt.get_height()//2
 
-        if hash in searchDeleteList:
-            pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)
+        screen.blit(prompt, (promptX, promptY))
 
-        #Render Bounding Boxes
-
-        rotatedPoints = objectCache[hash]["points"]
-
-        rotatedPoints = [(x - cameraX, SCREEN_HEIGHT - (y - cameraY)) for x, y in rotatedPoints]
-
-        pygame.draw.polygon(screen, (255,0,0), rotatedPoints, 1)
 
     for i, text in enumerate(mouseTextList):
         renderedText = FONT[15].render(text,False,(255,0,0)) #+"::"+str(hash)
