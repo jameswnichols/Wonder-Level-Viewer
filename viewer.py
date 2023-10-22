@@ -158,7 +158,7 @@ while running:
 
     textHoverOffset = 0
 
-    screen.fill((255,255,255))
+    screen.fill((33,37,43)) #(33,37,43)
 
     screenMinX, screenMaxX = cameraX, (cameraX + SCREEN_WIDTH)
 
@@ -251,12 +251,10 @@ while running:
 
                 rotatedPoints = [(x - cameraX, SCREEN_HEIGHT - (y - cameraY)) for x, y in rotatedPoints]
 
-                pygame.draw.polygon(screen, (255,0,0), rotatedPoints, 1)
+                pygame.draw.polygon(screen, (249,249,249), rotatedPoints, 2) #249,249,249 2
     
     #Runs if no file is selected
     else:
-        screen.fill((0,0,0))
-
         prompt = FONT[15].render("Drag and drop x.json file here to open",False, (255,255,255))
 
         promptX, promptY = SCREEN_WIDTH//2 - prompt.get_width()//2, SCREEN_HEIGHT//2 - prompt.get_height()//2
