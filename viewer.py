@@ -102,9 +102,18 @@ def generateObjectCache(levelData):
 
         objectRect = pygame.Rect(smallestX, smallestY, biggestX - smallestX, biggestY - smallestY)
 
-        objectCache[hash] = {"points": rotatedPoints, "clipRect": objectRect}
+        clipLines = [[rotatedPoints[0],rotatedPoints[1]],[rotatedPoints[1],rotatedPoints[2]],[rotatedPoints[2],rotatedPoints[3]],[rotatedPoints[3],rotatedPoints[0]]]
+
+        objectCache[hash] = {"points": rotatedPoints, "clipRect": objectRect,"clipLines":clipLines}
 
     return objectCache
+
+def clipLines(rect : pygame.Rect, lines : list[list[tuple]]):
+    for p1, p2 in lines:
+        if rect.clipline(p1, p2):
+            return True
+    
+    return False
 
 pygame.init()
 
@@ -225,6 +234,8 @@ while running:
 
         objectClipRect = objectCache[hash]["clipRect"]
 
+        objectClipLines = objectCache[hash]["clipLines"]
+
         screenRect = pygame.Rect(cameraX, cameraY, SCREEN_WIDTH, SCREEN_HEIGHT)
 
         #used to detect when mouse is nearby object bounding boxes.
@@ -248,10 +259,9 @@ while running:
 
             pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
 
-        #distanceFromMouse = distanceBetween((screenX,screenY),pygame.mouse.get_pos())
-
-        if objectClipRect.colliderect(mouseRect) and not( objectClipRect.contains(mouseRect)):
-
+        
+        #If the mouse is in the objects original box then check if it hits the lines
+        if objectClipRect.colliderect(mouseRect) and clipLines(mouseRect,objectClipLines):
             currentHoverHash = hash
             
             name = objectType
