@@ -38,7 +38,12 @@ def traceLinkBack(hash):
                 print(f"Traced Through :: {actor['Gyaml']}")
                 break
 
-def rotatePoint(pivotX, pivotY, x, y, angle):
+def rotatePoint(pivotPoint, rotatePoint, angle):
+
+    pivotX, pivotY = pivotPoint
+
+    x, y = rotatePoint
+
     sin = math.sin(angle)
     cos = math.cos(angle)
 
@@ -48,7 +53,7 @@ def rotatePoint(pivotX, pivotY, x, y, angle):
     newX = originX * cos - originY * sin
     newY = originX * sin + originY * cos
 
-    return newX + pivotX, newY + pivotY
+    return (newX + pivotX, newY + pivotY)
 
 
 pygame.init()
@@ -148,8 +153,8 @@ while running:
     for actor in levelData["root"]["Actors"]:
         objectType, position, hash = actor["Gyaml"], actor["Translate"], actor["Hash"]
 
-        # if objectType.startswith("MapObj"):
-        #     continue
+        if objectType.startswith("MapObj"):
+            continue
 
         position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
 
@@ -229,21 +234,46 @@ while running:
         if hash in searchDeleteList:
             pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)  
 
-        if objectType == "ObjectDokan" and True == False:
+        if objectType == "ObjectDokan":
             pipeHeight = actor["Scale"][1]
             pipeAngle = actor["Rotate"][2]
 
-            actualPipeHeight = (4/3) * UNIT_SIZE * pipeHeight
+            actualPipeHeight = ((4/3) * UNIT_SIZE) * pipeHeight
 
-            rotatedX, rotatedY = rotatePoint(screenX, screenY, screenX, screenY+actualPipeHeight,pipeAngle)
+            pipeWidth = 2 * UNIT_SIZE
 
-            pipeSurface = pygame.Surface((2 * UNIT_SIZE,actualPipeHeight))
-            pipeSurface.fill((68,161,61))
-            screen.blit(pipeSurface,(rotatedX,rotatedY))
+            pivotPoint = (screenX, screenY)
+
+            points = [(screenX, screenY),(screenX, screenY - actualPipeHeight),(screenX + pipeWidth,screenY - actualPipeHeight),(screenX + pipeWidth, screenY)]
+
+            rotatedPoints = [rotatePoint(pivotPoint, point, pipeAngle) for point in points]
+
+            pygame.draw.polygon(screen, (68,161,61), rotatedPoints)
+            
+            #(68,161,61)
+            #screen.blit(pipeSurface,(rotatedX,rotatedY))
         
         if pygame.key.get_pressed()[pygame.K_o]:
-            outline = pygame.Rect(screenX, screenY, UNIT_SIZE, UNIT_SIZE)
-            pygame.draw.rect(screen, (255,0,0), outline, 1)
+            
+            objectRotation = actor["Rotate"][2]
+
+            pivotPoint = (screenX, screenY)
+
+            pointsOnOutline = [(screenX, screenY),(screenX + UNIT_SIZE, screenY),(screenX + UNIT_SIZE, screenY + UNIT_SIZE),(screenX, screenY + UNIT_SIZE)]
+
+            rotatedPoints = [rotatePoint(pivotPoint, point, objectRotation) for point in pointsOnOutline]
+
+            furthestLeftX = min([x[0] for x in rotatedPoints])
+            furthestUpY = min([y[1] for y in rotatedPoints])
+
+            offsetX, offsetY = screenX - furthestLeftX, screenY - furthestUpY
+
+            rotatedPoints = [(x+offsetX, y+offsetY) for x, y in rotatedPoints]
+
+            pygame.draw.polygon(screen, (255,0,0), rotatedPoints, 1)
+
+            # outline = pygame.Rect(screenX, screenY, UNIT_SIZE, UNIT_SIZE)
+            # pygame.draw.rect(screen, (255,0,0), outline, 1)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
