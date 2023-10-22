@@ -132,7 +132,7 @@ FONT = [pygame.font.Font("dogicapixelbold.ttf",x) for x in range(0,90)]
 
 BOTTOM_ANCHOR = ["ObjectDokan"]
 
-OBJECT_SIZES = {"ObjectDokan" : (2, 2), "ObjectDokanJoint" : (2, 2), "ObjectDokanMiddle" : (2, 2)}
+OBJECT_SIZES = {"ObjectDokan" : (2, 2), "ObjectDokanJoint" : (2, 2), "ObjectDokanMiddle" : (2, 2), "ObjectFountainDokan" : (2, 2), "BlockHatenaLong" : (3, 1)}
 
 cameraX, cameraY = 0, 0
 
@@ -174,7 +174,7 @@ while running:
     if levelData:
         if "BgUnits" in levelData["root"]:
             for section in levelData["root"]["BgUnits"]:
-                if "BeltRails" not in section:
+                if "BeltRails" not in section or "Walls" not in section:
                     continue
 
                 for wall in section["Walls"]:
@@ -274,7 +274,7 @@ while running:
             running = False
         
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_f:
+            if event.key == pygame.K_t:
                 if currentHoverHash not in REVERSE_LINKS:
                     continue
 
