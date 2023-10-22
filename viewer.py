@@ -152,6 +152,10 @@ running = True
 
 dt = 0
 
+mouseHeldDown = False
+mouseStartX, mouseStartY = 0, 0
+mouseStartCameraX, mouseStartCameraY = 0, 0
+
 while running:
 
     currentHoverHash = None
@@ -318,14 +322,28 @@ while running:
 
     pressedKeys = pygame.key.get_pressed()
 
-    if pressedKeys[pygame.K_d]:
-        cameraX += 2 * dt
-    if pressedKeys[pygame.K_a]:
-        cameraX -= 2 * dt
-    if pressedKeys[pygame.K_w]:
-        cameraY += 2 * dt
-    if pressedKeys[pygame.K_s]:
-        cameraY -= 2 * dt
+    if not mouseHeldDown:
+        if pressedKeys[pygame.K_d]:
+            cameraX += 2 * dt
+        if pressedKeys[pygame.K_a]:
+            cameraX -= 2 * dt
+        if pressedKeys[pygame.K_w]:
+            cameraY += 2 * dt
+        if pressedKeys[pygame.K_s]:
+            cameraY -= 2 * dt
+
+    if pygame.mouse.get_pressed()[0] and not mouseHeldDown:
+        mouseHeldDown = True
+        mouseStartX, mouseStartY = pygame.mouse.get_pos()
+        mouseStartCameraX, mouseStartCameraY = cameraX, cameraY
+    elif not pygame.mouse.get_pressed()[0] and mouseHeldDown:
+        mouseHeldDown = False
+    
+    if mouseHeldDown:
+        mouseX, mouseY = pygame.mouse.get_pos()
+        mouseDeltaX, mouseDeltaY = mouseStartX - mouseX, mouseStartY - mouseY
+
+        cameraX, cameraY = mouseStartCameraX + mouseDeltaX, mouseStartCameraY - mouseDeltaY
 
     pygame.display.flip()
     dt = clock.tick(120)
