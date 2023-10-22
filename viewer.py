@@ -110,7 +110,7 @@ def generateObjectCache(levelData):
 
         clipLines = [[rotatedPoints[0],rotatedPoints[1]],[rotatedPoints[1],rotatedPoints[2]],[rotatedPoints[2],rotatedPoints[3]],[rotatedPoints[3],rotatedPoints[0]]]
 
-        objectCache[hash] = {"points": rotatedPoints, "clipRect": objectRect,"clipLines":clipLines}
+        objectCache[hash] = {"points": rotatedPoints, "clipRect": objectRect,"clipLines":clipLines,"position":position}
 
     return objectCache
 
@@ -120,6 +120,74 @@ def clipLines(rect : pygame.Rect, lines : list[list[tuple]]):
             return True
     
     return False
+
+def renderText(font : pygame.Font, text : str):
+
+    characterWidth, characterHeight = font.size("e")
+
+    darkOffsetX, darkOffsetY = characterWidth / 6, characterHeight / 6
+
+    mainTextSurface = font.render(text, False, (255,255,255))
+
+    mtWidth, mtHeight = mainTextSurface.get_size()
+
+    finalSurface = pygame.Surface((mtWidth + darkOffsetX * 2, mtHeight + darkOffsetY * 2),pygame.SRCALPHA)
+
+    textShadowSurface = font.render(text, False, (128,128,128))
+
+    finalSurface.blit(textShadowSurface,(darkOffsetX, darkOffsetY))
+    finalSurface.blit(mainTextSurface,(0,0))
+
+    return finalSurface
+
+def generateLogicLinks(levelData, objectCache):
+
+    links = {}
+
+    if "Links" not in levelData["root"]:
+        return links
+    
+    for link in levelData["root"]["Links"]:
+
+        destination, type, source = link["Dst"], link["Name"], link["Src"]
+
+        destionationPosition = objectCache[destination]["position"]
+
+        sourcePosition = objectCache[source]["position"]
+
+        if source not in links:
+            links[source] = {"send":[(destionationPosition,destination)],"recv":[]}
+        else:
+            links[source]["send"].append((destionationPosition,destination))
+        
+        if destination not in links:
+            links[destination] = {"send":[],"recv":[(sourcePosition,source)]}
+        else:
+            links[destination]["recv"].append((sourcePosition,source))
+
+    return links
+
+def wrapNumber(x, min, max):
+    x = min + (x - min) % (max - min)
+    return x
+
+def generateConnectionLine(start, end, offset):
+
+    points = []
+
+    splitAmount = 100
+
+    xPerPoint = (end[0] - start[0]) / splitAmount
+    yPerPoint = (end[1] - start[1]) / splitAmount
+
+    for i in range(0, splitAmount):
+        pointX = start[0] + (xPerPoint * i)
+        pointY = start[1] + (yPerPoint * i)
+
+        points.append((pointX, pointY))
+
+    return points
+    
 
 pygame.init()
 
@@ -148,9 +216,13 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 levelData = None
 
+levelLinks = None
+
 running = True
 
 dt = 0
+
+sinOffset = 0
 
 mouseHeldDown = False
 mouseStartX, mouseStartY = 0, 0
@@ -174,32 +246,31 @@ while running:
     if levelData:
         if "BgUnits" in levelData["root"]:
             for section in levelData["root"]["BgUnits"]:
-                if "BeltRails" not in section or "Walls" not in section:
-                    continue
-
-                for wall in section["Walls"]:
-                    data = wall["ExternalRail"]
-                    isClosed, rawPoints = data["IsClosed"], data["Points"]
-                    points = []
-                    for point in rawPoints:
-                        position = point["Translate"]
-                        points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-cameraY-1)]) #+UNIT_SIZE//2 -UNIT_SIZE//2
-                    
-                    pygame.draw.polygon(screen,(96,52,30),points) #127 51 0
+                if "Walls" in section:
+                    for wall in section["Walls"]:
+                        data = wall["ExternalRail"]
+                        isClosed, rawPoints = data["IsClosed"], data["Points"]
+                        points = []
+                        for point in rawPoints:
+                            position = point["Translate"]
+                            points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-cameraY-1)]) #+UNIT_SIZE//2 -UNIT_SIZE//2
+                        
+                        pygame.draw.polygon(screen,(96,52,30),points) #127 51 0
                 
-                for floor in section["BeltRails"]:
-                    isClosed = floor["IsClosed"]
-                    points = []
-                    for point in floor["Points"]:
-                        position = point["Translate"]
-                        relativeLocation = [(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-cameraY-1)] #+UNIT_SIZE//2 -UNIT_SIZE//2
-                        points.append(relativeLocation)
+                if "BeltRails" in section:
+                    for floor in section["BeltRails"]:
+                        isClosed = floor["IsClosed"]
+                        points = []
+                        for point in floor["Points"]:
+                            position = point["Translate"]
+                            relativeLocation = [(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-cameraY-1)] #+UNIT_SIZE//2 -UNIT_SIZE//2
+                            points.append(relativeLocation)
 
-                        if distanceBetween(relativeLocation,pygame.mouse.get_pos()) < 10 and pygame.key.get_pressed()[pygame.K_m]:
-                            txt = FONT[10].render(f"{position}",False,(255,0,0))
-                            screen.blit(txt,(relativeLocation[0]-txt.get_width()//2,relativeLocation[1]-10))
-                    
-                    pygame.draw.lines(screen,(149,190,119),isClosed,points,width=4) #38,127,0
+                            if distanceBetween(relativeLocation,pygame.mouse.get_pos()) < 10 and pygame.key.get_pressed()[pygame.K_m]:
+                                txt = FONT[10].render(f"{position}",False,(255,0,0))
+                                screen.blit(txt,(relativeLocation[0]-txt.get_width()//2,relativeLocation[1]-10))
+                        
+                        pygame.draw.lines(screen,(149,190,119),isClosed,points,width=4) #38,127,0
 
         if "Actors" in levelData["root"]:
             for actor in levelData["root"]["Actors"]:
@@ -228,8 +299,8 @@ while running:
                 screenX = position[0] - cameraX
                 screenY = SCREEN_HEIGHT - (position[1] - cameraY)
 
-                if hash in REVERSE_LINKS:
-                    pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
+                # if hash in REVERSE_LINKS:
+                #     pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
 
                 #If the mouse is in the objects original box then check if it hits the lines
                 if objectClipRect.colliderect(mouseRect) and clipLines(mouseRect,objectClipLines):
@@ -239,11 +310,29 @@ while running:
 
                     mouseTextList.append(name)
 
-                if hash == searchHash:
-                    pygame.draw.circle(screen,(0,0,255),(screenX,screenY),4)
+                    if hash in levelLinks:
+                        inbound, outbound = levelLinks[hash]["recv"], levelLinks[hash]["send"]
+                        # for (inboundX, inboundY, _), inboundHash in inbound:
+                        #     pygame.draw.aaline(screen,(97,175,227),(screenX, screenY), (inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)))
 
-                if hash in searchDeleteList:
-                    pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)
+                        for (outboundX, outboundY, _), inboundHash in outbound:
+
+                            linePoints = generateConnectionLine((screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),sinOffset)
+
+                            pygame.draw.lines(screen,(152,195,121),False,linePoints)
+
+                            #pygame.draw.aaline(screen,(152,195,121),(screenX, screenY), (outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)))
+
+                        #Outbound (152,195,121)
+                        #Inbound (97,175,227)
+                        #Delete (194,108,107)
+                        
+
+                # if hash == searchHash:
+                #     pygame.draw.circle(screen,(0,0,255),(screenX,screenY),4)
+
+                # if hash in searchDeleteList:
+                #     pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)
 
                 #Render Bounding Boxes
 
@@ -255,7 +344,7 @@ while running:
     
     #Runs if no file is selected
     else:
-        prompt = FONT[15].render("Drag and drop x.json file here to open",False, (255,255,255))
+        prompt = FONT[15].render("Drag and drop (...).json file here to open",False, (255,255,255))
 
         promptX, promptY = SCREEN_WIDTH//2 - prompt.get_width()//2, SCREEN_HEIGHT//2 - prompt.get_height()//2
 
@@ -263,7 +352,8 @@ while running:
 
 
     for i, text in enumerate(mouseTextList):
-        renderedText = FONT[15].render(text,False,(255,0,0)) #+"::"+str(hash)
+        renderedText = renderText(FONT[15], text)
+        #renderedText = FONT[15].render(text,False,(255,0,0)) #+"::"+str(hash)
 
         width = renderedText.get_size()[0]
 
@@ -275,7 +365,7 @@ while running:
         
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_t:
-                if currentHoverHash not in REVERSE_LINKS:
+                if True: #currentHover not in REVERSE_LINKS
                     continue
 
                 print(f"Find route for :: {currentHoverHash}")
@@ -306,15 +396,17 @@ while running:
                     with open(filepath,"r") as f:
                         levelData = json.load(f)
 
-                    REVERSE_LINKS = {}
+                    # REVERSE_LINKS = {}
 
-                    for link in levelData["root"]["Links"]:
-                        if link["Dst"] not in REVERSE_LINKS:
-                            REVERSE_LINKS[link["Dst"]] = [link["Src"]]
-                        else:
-                            REVERSE_LINKS[link["Dst"]].append(link["Src"])
+                    # for link in levelData["root"]["Links"]:
+                    #     if link["Dst"] not in REVERSE_LINKS:
+                    #         REVERSE_LINKS[link["Dst"]] = [link["Src"]]
+                    #     else:
+                    #         REVERSE_LINKS[link["Dst"]].append(link["Src"])
                     
                     objectCache = generateObjectCache(levelData)
+
+                    levelLinks = generateLogicLinks(levelData, objectCache)
 
                     cameraX, cameraY = 0, 0
                 except:
@@ -365,5 +457,9 @@ while running:
 
     fps = clock.get_fps()
     pygame.display.set_caption(f"Wonder Level Viewer - FPS: {round(fps,1)}")
+
+    sinOffset += 0.01 * dt
+    sinOffset = wrapNumber(sinOffset, -360, 360)
+
 
 pygame.quit()
