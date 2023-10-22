@@ -81,7 +81,10 @@ def generateObjectCache(levelData):
 
         position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
 
-        objectRotation = actor["Rotate"][2] * -1
+        objectRotation = actor["Rotate"][2]
+
+        if objectRotation != 0:
+            objectRotation += math.pi / 180
 
         objectScaleX, objectScaleY, _ = actor["Scale"]
 
@@ -241,7 +244,7 @@ while running:
         #used to detect when mouse is nearby object bounding boxes.
         mouseX, mouseY = pygame.mouse.get_pos()
 
-        mouseRect = pygame.Rect(mouseX - 2.5 + cameraX, (SCREEN_HEIGHT-mouseY) - 2.5 + cameraY, 5, 5)
+        mouseRect = pygame.Rect(mouseX - 5 + cameraX, (SCREEN_HEIGHT-mouseY) - 5 + cameraY, 10, 10)
         
         if not screenRect.colliderect(objectClipRect):
              continue
