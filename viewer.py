@@ -82,10 +82,6 @@ UNIT_SIZE = 32
 
 FONT = [pygame.font.Font("dogicapixelbold.ttf",x) for x in range(0,90)]
 
-STATIC_LOOKUP = {"ObjectGoalPole":"END","PlayerLocator":"START","ObjectWonderTag":"START SEED","ItemWonderFinishWonderSead":"END SEED","RetryPoint":"CHECKPOINT","ObjectTalkingFlower":"TALKING FLOWER","ObjectTalkingFlowerS":"TALKING FLOWER"}
-
-OBJECT_LOOKUP = {"ObjectMiniFlowerInAir":"MINI WONDER FLOWER","ObjectCoinYellow":"COIN","ObjectMiniLuckyCoin":"MINI WONDER COIN","ObjectCoinRandom":"WONDER COIN","ObjectBigTenLuckyCoin":"10 WONDER COIN","BlockRengaLight":"EMPTY BRICK","BlockRengaItem":"BRICK WITH COIN","BlockHatena":"? BLOCK","BlockClarity":"HIDDEN ? BLOCK","ObjectDokan":"PIPE"}
-
 BOTTOM_ANCHOR = ["ObjectDokan"]
 
 OBJECT_SIZES = {"ObjectDokan" : (2, 2)}
@@ -142,8 +138,6 @@ for link in levelData["root"]["Links"]:
 
 running = gotFile
 
-#screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
 dt = 0
 
 while running:
@@ -190,9 +184,6 @@ while running:
     for actor in levelData["root"]["Actors"]:
         objectType, position, hash = actor["Gyaml"], actor["Translate"], actor["Hash"]
 
-        if objectType.startswith("MapObj"):
-            continue
-
         position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
 
         #Make sure its in the visible area.
@@ -215,21 +206,10 @@ while running:
         distanceFromMouse = distanceBetween((screenX,screenY),pygame.mouse.get_pos())
 
         if distanceFromMouse < 5:
+
             currentHoverHash = hash
-
-        if objectType in STATIC_LOOKUP:
             
-            info = STATIC_LOOKUP[objectType]
-
-            text = FONT[15].render(info,False,(255,0,0))
-
-            width = text.get_size()[0]
-
-            screen.blit(text,(screenX-width//2,screenY-20))
-
-        elif distanceFromMouse < 5:
-            
-            name = OBJECT_LOOKUP[objectType] if objectType in OBJECT_LOOKUP else objectType
+            name = objectType
 
             text = FONT[15].render(name,False,(255,0,0)) #+"::"+str(hash)
 
@@ -253,7 +233,7 @@ while running:
 
         pivotPoint = (screenX, screenY)
 
-        bottomAnchor = objectType in BOTTOM_ANCHOR
+        bottomAnchor = (objectType in BOTTOM_ANCHOR) or ("enemy" in objectType.lower())
 
         objectSize = OBJECT_SIZES[objectType] if objectType in OBJECT_SIZES else (1, 1)
 
