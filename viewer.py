@@ -319,14 +319,6 @@ while running:
                     cameraX, cameraY = 0, 0
                 except:
                     levelData = None
-        
-        if event.type == pygame.MOUSEWHEEL:
-            if event.y < 0:
-                UNIT_SIZE -= 4
-                UNIT_SIZE = max(4, min(UNIT_SIZE, 128))
-            if event.y > 0:
-                UNIT_SIZE += 4
-                UNIT_SIZE = max(4, min(UNIT_SIZE, 128))
             
             objectCache = generateObjectCache(levelData)
 
