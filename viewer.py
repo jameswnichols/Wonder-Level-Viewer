@@ -76,6 +76,8 @@ def generatePoints(pivotPoint, scale, objectSize, isBottomMiddle = False):
 def generateObjectCache(levelData):
     objectCache = {}
 
+    prettyRotationAdjustments = {3.14159:math.pi,-3.14159:-math.pi,1.5708:90 * (math.pi/180),-1.5708:-90 * (math.pi/180)}
+
     for actor in levelData["root"]["Actors"]:
         objectType, position, hash = actor["Gyaml"], actor["Translate"], actor["Hash"]
 
@@ -83,8 +85,9 @@ def generateObjectCache(levelData):
 
         objectRotation = actor["Rotate"][2]
 
-        if objectRotation != 0:
-            objectRotation += math.pi / 180
+        objectRotation = prettyRotationAdjustments[objectRotation] if objectRotation in prettyRotationAdjustments else objectRotation
+
+        objectRotation += math.pi
 
         objectScaleX, objectScaleY, _ = actor["Scale"]
 
@@ -321,6 +324,22 @@ while running:
                     if actor["Hash"] == currentHoverHash:
                         print(actor)
                         break
+
+        if event.type == pygame.DROPFILE:
+            filepath = event.file
+            if filepath.split(".")[-1] == "json":
+                with open(filepath,"r") as f:
+                    levelData = json.load(f)
+
+                REVERSE_LINKS = {}
+
+                for link in levelData["root"]["Links"]:
+                    if link["Dst"] not in REVERSE_LINKS:
+                        REVERSE_LINKS[link["Dst"]] = [link["Src"]]
+                    else:
+                        REVERSE_LINKS[link["Dst"]].append(link["Src"])
+                
+                objectCache = generateObjectCache(levelData)
 
     pressedKeys = pygame.key.get_pressed()
 
