@@ -73,6 +73,39 @@ def generatePoints(pivotPoint, scale, objectSize, isBottomMiddle = False):
 
     return points
 
+def generateObjectCache(levelData):
+    objectCache = {}
+
+    for actor in levelData["root"]["Actors"]:
+        objectType, position, hash = actor["Gyaml"], actor["Translate"], actor["Hash"]
+
+        position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
+
+        objectRotation = actor["Rotate"][2] * -1
+
+        objectScaleX, objectScaleY, _ = actor["Scale"]
+
+        pivotPoint = (position[0], position[1])
+
+        bottomAnchor = (objectType in BOTTOM_ANCHOR) or ("enemy" in objectType.lower())
+
+        objectSize = OBJECT_SIZES[objectType] if objectType in OBJECT_SIZES else (1, 1)
+
+        pointsOnOutline = generatePoints(pivotPoint, (objectScaleX, objectScaleY), objectSize, bottomAnchor)
+
+        rotatedPoints = [rotatePoint(pivotPoint, point, objectRotation) for point in pointsOnOutline]
+
+        pointXs, pointYs = [x[0] for x in rotatedPoints], [y[1] for y in rotatedPoints]
+
+        smallestX, biggestX = min(pointXs), max(pointXs)
+        smallestY, biggestY = min(pointYs), max(pointYs)
+
+        objectRect = pygame.Rect(smallestX, smallestY, biggestX - smallestX, biggestY - smallestY)
+
+        objectCache[hash] = {"points": rotatedPoints, "clipRect": objectRect}
+
+    return objectCache
+
 pygame.init()
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 720
@@ -140,6 +173,8 @@ running = gotFile
 
 dt = 0
 
+objectCache = generateObjectCache(levelData)
+
 while running:
 
     currentHoverHash = None
@@ -186,11 +221,16 @@ while running:
 
         position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
 
+        screenRect = pygame.Rect(cameraX, cameraY, SCREEN_WIDTH, SCREEN_HEIGHT)
+        
+        if not screenRect.colliderect(objectCache[hash]["clipRect"]):
+             continue
+
         #Make sure its in the visible area.
-        if not (screenMinX <= position[0] <= screenMaxX):
-            continue
-        if not (screenMinY <= position[1] <= screenMaxY):
-            continue
+        # if not (screenMinX <= position[0] <= screenMaxX):
+        #     continue
+        # if not (screenMinY <= position[1] <= screenMaxY):
+        #     continue
         if abs(position[2]) > UNIT_SIZE*4:
             continue
 
@@ -225,21 +265,9 @@ while running:
         if hash in searchDeleteList:
             pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)  
 
-        #Hitboxes
-            
-        objectRotation = actor["Rotate"][2] * -1
+        rotatedPoints = objectCache[hash]["points"]
 
-        objectScaleX, objectScaleY, _ = actor["Scale"]
-
-        pivotPoint = (screenX, screenY)
-
-        bottomAnchor = (objectType in BOTTOM_ANCHOR) or ("enemy" in objectType.lower())
-
-        objectSize = OBJECT_SIZES[objectType] if objectType in OBJECT_SIZES else (1, 1)
-
-        pointsOnOutline = generatePoints(pivotPoint, (objectScaleX, objectScaleY), objectSize, bottomAnchor)#[(screenX-(UNIT_SIZE//2*objectScaleX), screenY - (UNIT_SIZE//2*objectScaleY)),(screenX + (UNIT_SIZE//2*objectScaleX), screenY - (UNIT_SIZE//2*objectScaleY)),(screenX + (UNIT_SIZE//2*objectScaleX), screenY + (UNIT_SIZE//2*objectScaleY)),(screenX - (UNIT_SIZE//2*objectScaleX), screenY + (UNIT_SIZE//2*objectScaleY))]
-
-        rotatedPoints = [rotatePoint(pivotPoint, point, objectRotation) for point in pointsOnOutline]
+        rotatedPoints = [(x - cameraX, SCREEN_HEIGHT - (y - cameraY)) for x, y in rotatedPoints]
 
         pygame.draw.polygon(screen, (255,0,0), rotatedPoints, 1)
 
