@@ -304,20 +304,23 @@ while running:
         if event.type == pygame.DROPFILE:
             filepath = event.file
             if filepath.split(".")[-1] == "json":
-                with open(filepath,"r") as f:
-                    levelData = json.load(f)
+                try:
+                    with open(filepath,"r") as f:
+                        levelData = json.load(f)
 
-                REVERSE_LINKS = {}
+                    REVERSE_LINKS = {}
 
-                for link in levelData["root"]["Links"]:
-                    if link["Dst"] not in REVERSE_LINKS:
-                        REVERSE_LINKS[link["Dst"]] = [link["Src"]]
-                    else:
-                        REVERSE_LINKS[link["Dst"]].append(link["Src"])
-                
-                objectCache = generateObjectCache(levelData)
+                    for link in levelData["root"]["Links"]:
+                        if link["Dst"] not in REVERSE_LINKS:
+                            REVERSE_LINKS[link["Dst"]] = [link["Src"]]
+                        else:
+                            REVERSE_LINKS[link["Dst"]].append(link["Src"])
+                    
+                    objectCache = generateObjectCache(levelData)
 
-                cameraX, cameraY = 0, 0
+                    cameraX, cameraY = 0, 0
+                except:
+                    levelData = None
 
     pressedKeys = pygame.key.get_pressed()
 
