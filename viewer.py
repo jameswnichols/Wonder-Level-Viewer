@@ -319,6 +319,21 @@ while running:
                     cameraX, cameraY = 0, 0
                 except:
                     levelData = None
+        
+        # if event.type == pygame.MOUSEWHEEL:
+        #     if event.y < 0:
+        #         old = UNIT_SIZE-1
+        #         UNIT_SIZE -= 4
+        #         UNIT_SIZE = max(4, min(UNIT_SIZE, 128))
+        #         cameraX = ((cameraX) / old) * UNIT_SIZE
+                
+        #     if event.y > 0:
+        #         old = UNIT_SIZE+1
+        #         UNIT_SIZE += 4
+        #         UNIT_SIZE = max(4, min(UNIT_SIZE, 128))
+        #         cameraX = (cameraX / old) * UNIT_SIZE
+            
+        #     objectCache = generateObjectCache(levelData)
 
     pressedKeys = pygame.key.get_pressed()
 
