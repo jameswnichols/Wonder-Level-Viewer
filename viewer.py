@@ -126,7 +126,7 @@ pygame.init()
 SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 720
 
 UNIT_SIZE = 32
-#Actual Size is 256
+#Actual Size is 256  8 - 128
 
 FONT = [pygame.font.Font("dogicapixelbold.ttf",x) for x in range(0,90)]
 
@@ -319,6 +319,16 @@ while running:
                     cameraX, cameraY = 0, 0
                 except:
                     levelData = None
+        
+        if event.type == pygame.MOUSEWHEEL:
+            if event.y < 0:
+                UNIT_SIZE -= 4
+                UNIT_SIZE = max(4, min(UNIT_SIZE, 128))
+            if event.y > 0:
+                UNIT_SIZE += 4
+                UNIT_SIZE = max(4, min(UNIT_SIZE, 128))
+            
+            objectCache = generateObjectCache(levelData)
 
     pressedKeys = pygame.key.get_pressed()
 
