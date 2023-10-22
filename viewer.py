@@ -132,7 +132,7 @@ while running:
                 points = []
                 for point in rawPoints:
                     position = point["Translate"]
-                    points.append([(position[0]*UNIT_SIZE)-cameraX+UNIT_SIZE//2,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)])
+                    points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-cameraY-1)]) #+UNIT_SIZE//2 -UNIT_SIZE//2
                 
                 pygame.draw.polygon(screen,(127,51,0),points)
             
@@ -141,7 +141,7 @@ while running:
                 points = []
                 for point in floor["Points"]:
                     position = point["Translate"]
-                    relativeLocation = [(position[0]*UNIT_SIZE)-cameraX+UNIT_SIZE//2,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-UNIT_SIZE//2-cameraY-1)]
+                    relativeLocation = [(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-cameraY-1)] #+UNIT_SIZE//2 -UNIT_SIZE//2
                     points.append(relativeLocation)
 
                     if distanceBetween(relativeLocation,pygame.mouse.get_pos()) < 10 and pygame.key.get_pressed()[pygame.K_m]:
@@ -157,9 +157,6 @@ while running:
             continue
 
         position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
-
-        if objectType == "ObjectDokan":
-            position = (position[0] - UNIT_SIZE//2, position[1] + UNIT_SIZE//2, position[2])
 
         #Make sure its in the visible area.
         if not (screenMinX <= position[0] <= screenMaxX):
@@ -204,29 +201,6 @@ while running:
             screen.blit(text,(screenX-width//2,screenY-20+textHoverOffset))
 
             textHoverOffset -= 20
-        
-        if objectType in BLOCK_LOOKUP:
-
-            block = pygame.Surface((UNIT_SIZE,UNIT_SIZE),pygame.SRCALPHA)
-            block.fill(BLOCK_LOOKUP[objectType])
-
-            screen.blit(block, (screenX, screenY))
-        
-        if objectType in CIRCLE_LOOKUP or objectType in SMALL_CIRCLE_LOOKUP or objectType in LARGE_CIRCLE_LOOKUP:
-            centerX = screenX + UNIT_SIZE//2
-            centerY = screenY + UNIT_SIZE//2
-
-            if objectType in CIRCLE_LOOKUP:
-                radius = UNIT_SIZE//2
-                colour = CIRCLE_LOOKUP[objectType]
-            elif objectType in SMALL_CIRCLE_LOOKUP:
-                radius = UNIT_SIZE//4
-                colour = SMALL_CIRCLE_LOOKUP[objectType]
-            elif objectType in LARGE_CIRCLE_LOOKUP:
-                radius = UNIT_SIZE
-                colour = LARGE_CIRCLE_LOOKUP[objectType]
-
-            pygame.draw.circle(screen,colour,(centerX,centerY),radius)
 
         if hash == searchHash:
             pygame.draw.circle(screen,(0,0,255),(screenX,screenY),4)
@@ -234,7 +208,7 @@ while running:
         if hash in searchDeleteList:
             pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)  
 
-        if objectType == "ObjectDokan":
+        if objectType == "ObjectDokan" and False == True:
             pipeHeight = actor["Scale"][1]
             pipeAngle = actor["Rotate"][2]
 
@@ -252,28 +226,25 @@ while running:
             
             #(68,161,61)
             #screen.blit(pipeSurface,(rotatedX,rotatedY))
-        
-        if pygame.key.get_pressed()[pygame.K_o]:
+
+        #Hitboxes
             
-            objectRotation = actor["Rotate"][2]
+        objectRotation = actor["Rotate"][2]
 
-            pivotPoint = (screenX, screenY)
+        pivotPoint = (screenX, screenY)
 
-            pointsOnOutline = [(screenX, screenY),(screenX + UNIT_SIZE, screenY),(screenX + UNIT_SIZE, screenY + UNIT_SIZE),(screenX, screenY + UNIT_SIZE)]
+        pointsOnOutline = [(screenX-UNIT_SIZE//2, screenY - UNIT_SIZE//2),(screenX + UNIT_SIZE//2, screenY - UNIT_SIZE//2),(screenX + UNIT_SIZE//2, screenY + UNIT_SIZE//2),(screenX - UNIT_SIZE//2, screenY + UNIT_SIZE//2)]
 
-            rotatedPoints = [rotatePoint(pivotPoint, point, objectRotation) for point in pointsOnOutline]
+        rotatedPoints = [rotatePoint(pivotPoint, point, objectRotation) for point in pointsOnOutline]
 
-            furthestLeftX = min([x[0] for x in rotatedPoints])
-            furthestUpY = min([y[1] for y in rotatedPoints])
+        # furthestLeftX = min([x[0] for x in rotatedPoints])
+        # furthestUpY = min([y[1] for y in rotatedPoints])
 
-            offsetX, offsetY = screenX - furthestLeftX, screenY - furthestUpY
+        # offsetX, offsetY = screenX - furthestLeftX, screenY - furthestUpY
 
-            rotatedPoints = [(x+offsetX, y+offsetY) for x, y in rotatedPoints]
+        # rotatedPoints = [(x+offsetX, y+offsetY) for x, y in rotatedPoints]
 
-            pygame.draw.polygon(screen, (255,0,0), rotatedPoints, 1)
-
-            # outline = pygame.Rect(screenX, screenY, UNIT_SIZE, UNIT_SIZE)
-            # pygame.draw.rect(screen, (255,0,0), outline, 1)
+        pygame.draw.polygon(screen, (255,0,0), rotatedPoints, 1)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
