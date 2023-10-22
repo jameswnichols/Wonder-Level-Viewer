@@ -98,7 +98,38 @@ searchHash = None
 
 searchDeleteList = []
 
-with open("Course1.json","r") as f:
+clock = pygame.time.Clock()
+
+#GET FILE UPLOAD
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Wonder Level Viewer")
+gotFile = False
+runFilePreview = True
+filepath = None
+
+while runFilePreview:
+    screen.fill((0,0,0))
+
+    prompt = FONT[15].render("Drag and drop x.json file here to open",False, (255,255,255))
+
+    promptX, promptY = SCREEN_WIDTH//2 - prompt.get_width()//2, SCREEN_HEIGHT//2 - prompt.get_height()//2
+
+    screen.blit(prompt, (promptX, promptY))
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            runFilePreview = False
+
+        if event.type == pygame.DROPFILE:
+            filepath = event.file
+            if filepath.split(".")[-1] == "json":
+                gotFile = True
+                runFilePreview = False
+    
+    pygame.display.flip()
+    clock.tick(60)
+
+with open(filepath,"r") as f:
     levelData = json.load(f)
 
 REVERSE_LINKS = {}
@@ -108,17 +139,10 @@ for link in levelData["root"]["Links"]:
         REVERSE_LINKS[link["Dst"]] = [link["Src"]]
     else:
         REVERSE_LINKS[link["Dst"]].append(link["Src"])
-#3
-# for actor in levelData["root"]["Actors"]:
-#     objectType, position = actor["Gyaml"], actor["Translate"]
-#     if objectType == "ObjectDokan":
-#         print(actor)
 
-running = True
+running = gotFile
 
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
-clock = pygame.time.Clock()
+#screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 dt = 0
 
