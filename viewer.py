@@ -132,7 +132,7 @@ FONT = [pygame.font.Font("dogicapixelbold.ttf",x) for x in range(0,90)]
 
 BOTTOM_ANCHOR = ["ObjectDokan"]
 
-OBJECT_SIZES = {"ObjectDokan" : (2, 2)}
+OBJECT_SIZES = {"ObjectDokan" : (2, 2), "ObjectDokanJoint" : (2, 2), "ObjectDokanMiddle" : (2, 2)}
 
 cameraX, cameraY = 0, 0
 
@@ -181,7 +181,7 @@ while running:
                         position = point["Translate"]
                         points.append([(position[0]*UNIT_SIZE)-cameraX,SCREEN_HEIGHT-((position[1]*UNIT_SIZE)-cameraY-1)]) #+UNIT_SIZE//2 -UNIT_SIZE//2
                     
-                    pygame.draw.polygon(screen,(127,51,0),points)
+                    pygame.draw.polygon(screen,(96,52,30),points) #127 51 0
                 
                 for floor in section["BeltRails"]:
                     isClosed = floor["IsClosed"]
@@ -195,7 +195,7 @@ while running:
                             txt = FONT[10].render(f"{position}",False,(255,0,0))
                             screen.blit(txt,(relativeLocation[0]-txt.get_width()//2,relativeLocation[1]-10))
                     
-                    pygame.draw.lines(screen,(38,127,0),isClosed,points,width=4)
+                    pygame.draw.lines(screen,(149,190,119),isClosed,points,width=4) #38,127,0
 
         if "Actors" in levelData["root"]:
             for actor in levelData["root"]["Actors"]:
@@ -224,13 +224,9 @@ while running:
                 screenX = position[0] - cameraX
                 screenY = SCREEN_HEIGHT - (position[1] - cameraY)
 
-                if hash not in REVERSE_LINKS:
-                    pygame.draw.circle(screen,(255,0,0), ((screenX), (screenY)),2)
-                else:
-
+                if hash in REVERSE_LINKS:
                     pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
 
-                
                 #If the mouse is in the objects original box then check if it hits the lines
                 if objectClipRect.colliderect(mouseRect) and clipLines(mouseRect,objectClipLines):
                     currentHoverHash = hash
