@@ -156,14 +156,14 @@ def generateLogicLinks(levelData, objectCache):
         sourcePosition = objectCache[source]["position"]
 
         if source not in links:
-            links[source] = {"send":[(destionationPosition,destination)],"recv":[]}
+            links[source] = {"send":[(destionationPosition,destination,type)],"recv":[]}
         else:
-            links[source]["send"].append((destionationPosition,destination))
+            links[source]["send"].append((destionationPosition,destination,type))
         
         if destination not in links:
-            links[destination] = {"send":[],"recv":[(sourcePosition,source)]}
+            links[destination] = {"send":[],"recv":[(sourcePosition,source,type)]}
         else:
-            links[destination]["recv"].append((sourcePosition,source))
+            links[destination]["recv"].append((sourcePosition,source,type))
 
     return links
 
@@ -171,42 +171,38 @@ def wrapNumber(x, min, max):
     x = min + (x - min) % (max - min)
     return x
 
+
 def generateConnectionLine(start, end, offset):
 
-    segments = []
+    maxDistanceFromSource = 6
 
-    splitAmount = 100
+    lineLength = math.sqrt((start[0] - end[0]) ** 2 + (start[1] - end[1]) ** 2)
 
-    currentShiftOffset = splitAmount * offset
+    splitAmount = int(lineLength / 6)
 
-    currentSegment = []
+    currentPulseIndex = (splitAmount) * offset
 
-    connected = 0
-    isFilled = True
+    points = []
+
+    if splitAmount == 0:
+        return points
 
     xPerPoint = (end[0] - start[0]) / splitAmount
     yPerPoint = (end[1] - start[1]) / splitAmount
 
-    for i in range(0, splitAmount):
+    for i in range(0, int(splitAmount)):
         pointX = start[0] + (xPerPoint * i)
         pointY = start[1] + (yPerPoint * i)
 
-        if connected == 0:
-            currentSegment.append((pointX, pointY))
-        if connected == 3:
-            currentSegment.append((pointX, pointY))
-            if isFilled:
-                segments.append(currentSegment)
-                isFilled = False
-            else:
-                isFilled = True
+        distanceFromIndex = min(abs(currentPulseIndex - i), abs((currentPulseIndex-splitAmount) - i))
 
-            connected = -1
-            currentSegment = []
-        
-        connected += 1
+        distanceInverse = maxDistanceFromSource - max(0, min(distanceFromIndex, maxDistanceFromSource))
 
-    return segments
+        radiusPercentage = 1.5 * (distanceInverse / maxDistanceFromSource) + 1
+
+        points.append(((pointX, pointY), radiusPercentage))
+
+    return points
     
 
 pygame.init()
@@ -242,7 +238,7 @@ running = True
 
 dt = 0
 
-sinOffset = 0
+pulseOffset = 0
 
 mouseHeldDown = False
 mouseStartX, mouseStartY = 0, 0
@@ -332,15 +328,20 @@ while running:
 
                     if hash in levelLinks:
                         inbound, outbound = levelLinks[hash]["recv"], levelLinks[hash]["send"]
-                        # for (inboundX, inboundY, _), inboundHash in inbound:
-                        #     pygame.draw.aaline(screen,(97,175,227),(screenX, screenY), (inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)))
 
-                        for (outboundX, outboundY, _), inboundHash in outbound:
+                        for (inboundX, inboundY, _), inboundHash, type in inbound:
 
-                            lineSegments = generateConnectionLine((screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),sinOffset)
+                            points = generateConnectionLine((inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)), (screenX, screenY),pulseOffset)
 
-                            for start, end in lineSegments:
-                                pygame.draw.line(screen,(152,195,121),start,end,2)
+                            for pos, size in points:
+                                pygame.draw.circle(screen, (97,175,227), pos, 2*size)
+
+                        for (outboundX, outboundY, _), outboundHash, type in outbound:
+
+                            points = generateConnectionLine((screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),pulseOffset)
+
+                            for pos, size in points:
+                                pygame.draw.circle(screen, (152,195,121), pos, 2*size)
 
                             #pygame.draw.aaline(screen,(152,195,121),(screenX, screenY), (outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)))
 
@@ -452,13 +453,13 @@ while running:
 
     if not mouseHeldDown:
         if pressedKeys[pygame.K_d]:
-            cameraX += 2 * dt
+            cameraX += 2000 * dt
         if pressedKeys[pygame.K_a]:
-            cameraX -= 2 * dt
+            cameraX -= 2000 * dt
         if pressedKeys[pygame.K_w]:
-            cameraY += 2 * dt
+            cameraY += 2000 * dt
         if pressedKeys[pygame.K_s]:
-            cameraY -= 2 * dt
+            cameraY -= 2000 * dt
 
     if pygame.mouse.get_pressed()[0] and not mouseHeldDown:
         mouseHeldDown = True
@@ -474,13 +475,13 @@ while running:
         cameraX, cameraY = mouseStartCameraX + mouseDeltaX, mouseStartCameraY - mouseDeltaY
 
     pygame.display.flip()
-    dt = clock.tick(120)
+    dt = clock.tick(120)/1000
 
     fps = clock.get_fps()
-    pygame.display.set_caption(f"Wonder Level Viewer - FPS: {round(fps,1)}")
+    pygame.display.set_caption(f"Wonder Level Viewer - FPS: {round(fps,1)} - Pulse: {pulseOffset}")
 
-    sinOffset += 1 * dt
-    sinOffset = wrapNumber(sinOffset, 0, 1)
+    pulseOffset += 1 * dt
+    pulseOffset = wrapNumber(pulseOffset, 0, 1)
 
 
 pygame.quit()
