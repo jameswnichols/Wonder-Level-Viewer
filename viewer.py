@@ -118,9 +118,12 @@ def generateLogicLinks(levelData, objectCache):
 
         destination, type, source = link["Dst"], link["Name"], link["Src"]
 
-        destionationPosition = objectCache[destination]["position"]
+        try:
+            destionationPosition = objectCache[destination]["position"]
 
-        sourcePosition = objectCache[source]["position"]
+            sourcePosition = objectCache[source]["position"]
+        except:
+            continue
 
         if source not in links:
             links[source] = {"send":[(destionationPosition,destination,type)],"recv":[]}
@@ -147,7 +150,7 @@ def generateConnectionLine(start, end, offset):
 
     lineLength = math.sqrt((start[0] - end[0]) ** 2 + (start[1] - end[1]) ** 2)
 
-    splitAmount = int(lineLength / 6)
+    splitAmount = min(int(lineLength / 6),MAX_TRACE_SAMPLES) #6
 
     currentPulseIndex = (splitAmount + overlapDelay) * offset
 
@@ -178,6 +181,8 @@ pygame.init()
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 720
 
+SCREEN_CLIP = pygame.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+
 UNIT_SIZE = 32
 #Actual Size is 256  8 - 128
 
@@ -188,6 +193,8 @@ BOTTOM_ANCHOR = ["ObjectDokan"]
 OBJECT_SIZES = {"ObjectDokan" : (2, 2), "ObjectDokanJoint" : (2, 2), "ObjectDokanMiddle" : (2, 2), "ObjectFountainDokan" : (2, 2), "BlockHatenaLong" : (3, 1)}
 
 MAX_TRACE_LENGTH = 1500
+
+MAX_TRACE_SAMPLES = 150
 
 cameraX, cameraY = 0, 0
 
@@ -278,7 +285,7 @@ while running:
 
                 mouseRect = pygame.Rect(mouseX - 5 + cameraX, (SCREEN_HEIGHT-mouseY) - 5 + cameraY, 10, 10)
                 
-                if not screenRect.colliderect(objectClipRect):
+                if (not screenRect.colliderect(objectClipRect)) and hash not in selectedHashList:
                     continue
 
                 #Get rid of background stuff.
@@ -314,7 +321,7 @@ while running:
                                 color = (224,108,117)
 
                             for pos, size in points:
-                                pygame.draw.circle(screen, color, pos, 2*size)
+                                    pygame.draw.circle(screen, color, pos, 2*size)
 
                         for (outboundX, outboundY, _), outboundHash, type in outbound:
 
@@ -326,7 +333,7 @@ while running:
                                 color = (224,108,117)
 
                             for pos, size in points:
-                                pygame.draw.circle(screen, color, pos, 2*size)
+                                    pygame.draw.circle(screen, color, pos, 2*size)
 
                         #Outbound (152,195,121)
                         #Inbound (97,175,227)
@@ -375,11 +382,11 @@ while running:
         if pressedKeys[pygame.K_s]:
             cameraY -= 2000 * dt
 
-    if pygame.mouse.get_pressed()[0] and not mouseHeldDown:
+    if pygame.mouse.get_pressed()[2] and not mouseHeldDown:
         mouseHeldDown = True
         mouseStartX, mouseStartY = pygame.mouse.get_pos()
         mouseStartCameraX, mouseStartCameraY = cameraX, cameraY
-    elif not pygame.mouse.get_pressed()[0] and mouseHeldDown:
+    elif not pygame.mouse.get_pressed()[2] and mouseHeldDown:
         mouseHeldDown = False
     
     if mouseHeldDown:
