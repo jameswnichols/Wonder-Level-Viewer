@@ -176,15 +176,17 @@ def generateConnectionLine(start, end, offset):
 
     maxDistanceFromSource = 6
 
+    overlapDelay = 10
+
     lineLength = math.sqrt((start[0] - end[0]) ** 2 + (start[1] - end[1]) ** 2)
 
     splitAmount = int(lineLength / 6)
 
-    currentPulseIndex = (splitAmount) * offset
+    currentPulseIndex = (splitAmount + overlapDelay) * offset
 
     points = []
 
-    if splitAmount == 0:
+    if splitAmount == 0 or lineLength > MAX_TRACE_LENGTH:
         return points
 
     xPerPoint = (end[0] - start[0]) / splitAmount
@@ -194,7 +196,7 @@ def generateConnectionLine(start, end, offset):
         pointX = start[0] + (xPerPoint * i)
         pointY = start[1] + (yPerPoint * i)
 
-        distanceFromIndex = min(abs(currentPulseIndex - i), abs((currentPulseIndex-splitAmount) - i))
+        distanceFromIndex = min(abs(currentPulseIndex - i), abs((currentPulseIndex-(splitAmount + overlapDelay)) - i))
 
         distanceInverse = maxDistanceFromSource - max(0, min(distanceFromIndex, maxDistanceFromSource))
 
@@ -218,9 +220,13 @@ BOTTOM_ANCHOR = ["ObjectDokan"]
 
 OBJECT_SIZES = {"ObjectDokan" : (2, 2), "ObjectDokanJoint" : (2, 2), "ObjectDokanMiddle" : (2, 2), "ObjectFountainDokan" : (2, 2), "BlockHatenaLong" : (3, 1)}
 
+MAX_TRACE_LENGTH = 1500
+
 cameraX, cameraY = 0, 0
 
-currentHoverHash = None
+hoverHashList = []
+
+selectedHashList = []
 
 searchHash = None
 
@@ -246,7 +252,7 @@ mouseStartCameraX, mouseStartCameraY = 0, 0
 
 while running:
 
-    currentHoverHash = None
+    hoverHashList = []
 
     textHoverOffset = 0
 
@@ -319,12 +325,17 @@ while running:
                 #     pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
 
                 #If the mouse is in the objects original box then check if it hits the lines
-                if objectClipRect.colliderect(mouseRect) and clipLines(mouseRect,objectClipLines):
-                    currentHoverHash = hash
-                    
-                    name = objectType
 
-                    mouseTextList.append(name)
+                mouseTouchingObject = (objectClipRect.colliderect(mouseRect) and clipLines(mouseRect,objectClipLines))
+
+                if mouseTouchingObject or hash in selectedHashList:
+                    
+                    if mouseTouchingObject:
+                        hoverHashList.append(hash)
+                        
+                        name = objectType
+
+                        mouseTextList.append(name)
 
                     if hash in levelLinks:
                         inbound, outbound = levelLinks[hash]["recv"], levelLinks[hash]["send"]
@@ -333,15 +344,25 @@ while running:
 
                             points = generateConnectionLine((inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)), (screenX, screenY),pulseOffset)
 
+                            color = (152,195,121)#(97,175,227)
+
+                            if type == "Delete":
+                                color = (224,108,117)
+
                             for pos, size in points:
-                                pygame.draw.circle(screen, (97,175,227), pos, 2*size)
+                                pygame.draw.circle(screen, color, pos, 2*size)
 
                         for (outboundX, outboundY, _), outboundHash, type in outbound:
 
                             points = generateConnectionLine((screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),pulseOffset)
 
+                            color = (152,195,121)
+
+                            if type == "Delete":
+                                color = (224,108,117)
+
                             for pos, size in points:
-                                pygame.draw.circle(screen, (152,195,121), pos, 2*size)
+                                pygame.draw.circle(screen, color, pos, 2*size)
 
                             #pygame.draw.aaline(screen,(152,195,121),(screenX, screenY), (outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)))
 
@@ -361,8 +382,13 @@ while running:
                 rotatedPoints = objectCache[hash]["points"]
 
                 rotatedPoints = [(x - cameraX, SCREEN_HEIGHT - (y - cameraY)) for x, y in rotatedPoints]
+                
+                color = (249,249,249)
 
-                pygame.draw.polygon(screen, (249,249,249), rotatedPoints, 2) #249,249,249 2
+                if hash in selectedHashList:
+                    color = (229,192,123)
+
+                pygame.draw.polygon(screen, color , rotatedPoints, 2) #249,249,249 2
     
     #Runs if no file is selected
     else:
@@ -375,80 +401,13 @@ while running:
 
     for i, text in enumerate(mouseTextList):
         renderedText = renderText(FONT[15], text)
-        #renderedText = FONT[15].render(text,False,(255,0,0)) #+"::"+str(hash)
 
         width = renderedText.get_size()[0]
 
         screen.blit(renderedText,(mouseX-width//2,mouseY - 20 - (i * 20)))
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_t:
-                if True: #currentHover not in REVERSE_LINKS
-                    continue
 
-                print(f"Find route for :: {currentHoverHash}")
-                searchHash, searchDeleteList = traceLinkBack(currentHoverHash)
-
-                for actor in levelData["root"]["Actors"]:
-                    if actor["Hash"] == searchHash:
-
-                        #Center the camera on the terminating actor.
-                        position = actor["Translate"]
-                        position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
-                        cameraX, cameraY = position[0]-SCREEN_WIDTH//2, position[1]-SCREEN_HEIGHT//2
-
-                        break
-
-                print(f"Route leads to :: {searchHash}")
-
-            if event.key == pygame.K_p:
-                for actor in levelData["root"]["Actors"]:
-                    if actor["Hash"] == currentHoverHash:
-                        print(actor)
-                        break
-
-        if event.type == pygame.DROPFILE:
-            filepath = event.file
-            if filepath.split(".")[-1] == "json":
-                try:
-                    with open(filepath,"r") as f:
-                        levelData = json.load(f)
-
-                    # REVERSE_LINKS = {}
-
-                    # for link in levelData["root"]["Links"]:
-                    #     if link["Dst"] not in REVERSE_LINKS:
-                    #         REVERSE_LINKS[link["Dst"]] = [link["Src"]]
-                    #     else:
-                    #         REVERSE_LINKS[link["Dst"]].append(link["Src"])
-                    
-                    objectCache = generateObjectCache(levelData)
-
-                    levelLinks = generateLogicLinks(levelData, objectCache)
-
-                    cameraX, cameraY = 0, 0
-                except:
-                    levelData = None
-        
-        # if event.type == pygame.MOUSEWHEEL:
-        #     if event.y < 0:
-        #         old = UNIT_SIZE-1
-        #         UNIT_SIZE -= 4
-        #         UNIT_SIZE = max(4, min(UNIT_SIZE, 128))
-        #         cameraX = ((cameraX) / old) * UNIT_SIZE
-                
-        #     if event.y > 0:
-        #         old = UNIT_SIZE+1
-        #         UNIT_SIZE += 4
-        #         UNIT_SIZE = max(4, min(UNIT_SIZE, 128))
-        #         cameraX = (cameraX / old) * UNIT_SIZE
-            
-        #     objectCache = generateObjectCache(levelData)
-
+    #Handle user input + dragging
     pressedKeys = pygame.key.get_pressed()
 
     if not mouseHeldDown:
@@ -474,11 +433,71 @@ while running:
 
         cameraX, cameraY = mouseStartCameraX + mouseDeltaX, mouseStartCameraY - mouseDeltaY
 
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        if event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                for hash in hoverHashList:
+                    if hash in selectedHashList:
+                        selectedHashList.remove(hash)
+                    else:
+                        selectedHashList.append(hash)
+        
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_t:
+                if True: #currentHover not in REVERSE_LINKS
+                    continue
+
+                print(f"Find route for :: {hoverHashList}")
+                searchHash, searchDeleteList = traceLinkBack(hoverHashList)
+
+                for actor in levelData["root"]["Actors"]:
+                    if actor["Hash"] == searchHash:
+
+                        #Center the camera on the terminating actor.
+                        position = actor["Translate"]
+                        position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
+                        cameraX, cameraY = position[0]-SCREEN_WIDTH//2, position[1]-SCREEN_HEIGHT//2
+
+                        break
+
+                print(f"Route leads to :: {searchHash}")
+
+            if event.key == pygame.K_p:
+                for actor in levelData["root"]["Actors"]:
+                    if actor["Hash"] in hoverHashList:
+                        print(actor)
+
+        if event.type == pygame.DROPFILE:
+            filepath = event.file
+            if filepath.split(".")[-1] == "json":
+                try:
+                    with open(filepath,"r") as f:
+                        levelData = json.load(f)
+
+                    # REVERSE_LINKS = {}
+
+                    # for link in levelData["root"]["Links"]:
+                    #     if link["Dst"] not in REVERSE_LINKS:
+                    #         REVERSE_LINKS[link["Dst"]] = [link["Src"]]
+                    #     else:
+                    #         REVERSE_LINKS[link["Dst"]].append(link["Src"])
+                    
+                    objectCache = generateObjectCache(levelData)
+
+                    levelLinks = generateLogicLinks(levelData, objectCache)
+
+                    cameraX, cameraY = 0, 0
+                except:
+                    levelData = None
+
     pygame.display.flip()
     dt = clock.tick(120)/1000
 
     fps = clock.get_fps()
-    pygame.display.set_caption(f"Wonder Level Viewer - FPS: {round(fps,1)} - Pulse: {pulseOffset}")
+    pygame.display.set_caption(f"Wonder Level Viewer - FPS: {round(fps,1)}")
 
     pulseOffset += 1 * dt
     pulseOffset = wrapNumber(pulseOffset, 0, 1)
