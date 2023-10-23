@@ -5,39 +5,6 @@ import json
 def distanceBetween(c1, c2):
     return math.sqrt((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2)
 
-def traceLinkBack(hash):
-    currentHash = hash
-    visited = []
-    deletedBy = []
-
-    while True:
-        if currentHash not in REVERSE_LINKS or currentHash in visited:
-
-            deletedBy = [x for x in deletedBy if x != currentHash]
-
-            if deletedBy:
-                print(f"!! Warning, stopped by {deletedBy} !!")
-
-            return currentHash, deletedBy
-
-        visited.append(currentHash)
-        currentHash = REVERSE_LINKS[currentHash][-1]
-
-        linkType = None
-
-        for link in levelData["root"]["Links"]:
-            if link["Dst"] == currentHash:
-                linkType = link["Name"]
-                if linkType == "Delete":
-                    if link["Src"] not in deletedBy:
-                        deletedBy.append(link["Src"])
-                break
-
-        for actor in levelData["root"]["Actors"]:
-            if actor["Hash"] == currentHash:
-                print(f"Traced Through :: {actor['Gyaml']}")
-                break
-
 def rotatePoint(pivotPoint, rotatePoint, angle):
 
     pivotX, pivotY = pivotPoint
@@ -321,9 +288,6 @@ while running:
                 screenX = position[0] - cameraX
                 screenY = SCREEN_HEIGHT - (position[1] - cameraY)
 
-                # if hash in REVERSE_LINKS:
-                #     pygame.draw.circle(screen,(0,255,0), ((screenX), (screenY)),2)
-
                 #If the mouse is in the objects original box then check if it hits the lines
 
                 mouseTouchingObject = (objectClipRect.colliderect(mouseRect) and clipLines(mouseRect,objectClipLines))
@@ -364,18 +328,9 @@ while running:
                             for pos, size in points:
                                 pygame.draw.circle(screen, color, pos, 2*size)
 
-                            #pygame.draw.aaline(screen,(152,195,121),(screenX, screenY), (outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)))
-
                         #Outbound (152,195,121)
                         #Inbound (97,175,227)
                         #Delete (194,108,107)
-                        
-
-                # if hash == searchHash:
-                #     pygame.draw.circle(screen,(0,0,255),(screenX,screenY),4)
-
-                # if hash in searchDeleteList:
-                #     pygame.draw.circle(screen,(255,0,255), ((screenX), (screenY)),4)
 
                 #Render Bounding Boxes
 
@@ -446,25 +401,6 @@ while running:
                         selectedHashList.append(hash)
         
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_t:
-                if True: #currentHover not in REVERSE_LINKS
-                    continue
-
-                print(f"Find route for :: {hoverHashList}")
-                searchHash, searchDeleteList = traceLinkBack(hoverHashList)
-
-                for actor in levelData["root"]["Actors"]:
-                    if actor["Hash"] == searchHash:
-
-                        #Center the camera on the terminating actor.
-                        position = actor["Translate"]
-                        position = (position[0] * UNIT_SIZE, position[1] * UNIT_SIZE, position[2] * UNIT_SIZE)
-                        cameraX, cameraY = position[0]-SCREEN_WIDTH//2, position[1]-SCREEN_HEIGHT//2
-
-                        break
-
-                print(f"Route leads to :: {searchHash}")
-
             if event.key == pygame.K_p:
                 for actor in levelData["root"]["Actors"]:
                     if actor["Hash"] in hoverHashList:
@@ -477,14 +413,6 @@ while running:
                     with open(filepath,"r") as f:
                         levelData = json.load(f)
 
-                    # REVERSE_LINKS = {}
-
-                    # for link in levelData["root"]["Links"]:
-                    #     if link["Dst"] not in REVERSE_LINKS:
-                    #         REVERSE_LINKS[link["Dst"]] = [link["Src"]]
-                    #     else:
-                    #         REVERSE_LINKS[link["Dst"]].append(link["Src"])
-                    
                     objectCache = generateObjectCache(levelData)
 
                     levelLinks = generateLogicLinks(levelData, objectCache)
