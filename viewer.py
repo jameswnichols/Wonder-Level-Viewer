@@ -173,9 +173,16 @@ def wrapNumber(x, min, max):
 
 def generateConnectionLine(start, end, offset):
 
-    points = []
+    segments = []
 
     splitAmount = 100
+
+    currentShiftOffset = splitAmount * offset
+
+    currentSegment = []
+
+    connected = 0
+    isFilled = True
 
     xPerPoint = (end[0] - start[0]) / splitAmount
     yPerPoint = (end[1] - start[1]) / splitAmount
@@ -184,9 +191,22 @@ def generateConnectionLine(start, end, offset):
         pointX = start[0] + (xPerPoint * i)
         pointY = start[1] + (yPerPoint * i)
 
-        points.append((pointX, pointY))
+        if connected == 0:
+            currentSegment.append((pointX, pointY))
+        if connected == 3:
+            currentSegment.append((pointX, pointY))
+            if isFilled:
+                segments.append(currentSegment)
+                isFilled = False
+            else:
+                isFilled = True
 
-    return points
+            connected = -1
+            currentSegment = []
+        
+        connected += 1
+
+    return segments
     
 
 pygame.init()
@@ -317,9 +337,10 @@ while running:
 
                         for (outboundX, outboundY, _), inboundHash in outbound:
 
-                            linePoints = generateConnectionLine((screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),sinOffset)
+                            lineSegments = generateConnectionLine((screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),sinOffset)
 
-                            pygame.draw.lines(screen,(152,195,121),False,linePoints)
+                            for start, end in lineSegments:
+                                pygame.draw.line(screen,(152,195,121),start,end,2)
 
                             #pygame.draw.aaline(screen,(152,195,121),(screenX, screenY), (outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)))
 
@@ -458,8 +479,8 @@ while running:
     fps = clock.get_fps()
     pygame.display.set_caption(f"Wonder Level Viewer - FPS: {round(fps,1)}")
 
-    sinOffset += 0.01 * dt
-    sinOffset = wrapNumber(sinOffset, -360, 360)
+    sinOffset += 1 * dt
+    sinOffset = wrapNumber(sinOffset, 0, 1)
 
 
 pygame.quit()
