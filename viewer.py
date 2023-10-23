@@ -105,7 +105,7 @@ def renderText(font : pygame.Font, text : str, color : tuple):
     finalSurface.blit(textShadowSurface,(darkOffsetX, darkOffsetY))
     finalSurface.blit(mainTextSurface,(0,0))
 
-    return finalSurface, mainTextSurface.get_size()
+    return finalSurface, (mtWidth, mtHeight)
 
 def generateLogicLinks(levelData, objectCache):
 
@@ -174,21 +174,23 @@ def generateConnectionLine(start, end, offset):
 
         points.append(((pointX, pointY), radiusPercentage))
 
-    return points, points[(len(points)//2)-1][0]
+    return points, points[(len(points)//2)-1][0], lineLength
 
 def renderLinkLine(screen, type, startPoint, endPoint, pulseOffset):
 
-    points, midPoint = generateConnectionLine(startPoint,endPoint,pulseOffset)
+    output = generateConnectionLine(startPoint,endPoint,pulseOffset)
 
-    color = (152,195,121)
+    if output == []:
+        return
 
-    if type == "Delete":
-        color = (224,108,117)
+    points, midPoint, lineLength = output
+    
+    color = LINK_COLOURS[type] if type in LINK_COLOURS else (97,175,227)
 
     for pos, size in points:
             pygame.draw.circle(screen, color, pos, 2*size)
 
-    if type in LINK_SYMBOLS:
+    if type in LINK_SYMBOLS and lineLength > 100:
         icon, textColor = LINK_SYMBOLS[type]
         textRender, textSize = renderText(FONT[20],icon,textColor)
 
@@ -212,6 +214,8 @@ BOTTOM_ANCHOR = ["ObjectDokan"]
 OBJECT_SIZES = {"ObjectDokan" : (2, 2), "ObjectDokanJoint" : (2, 2), "ObjectDokanMiddle" : (2, 2), "ObjectFountainDokan" : (2, 2), "BlockHatenaLong" : (3, 1)}
 
 LINK_SYMBOLS = {"Delete":("X",(224,108,117)),"Create":("+",(152,195,121))}
+
+LINK_COLOURS = {"Delete":(224,108,117),"Create":(152,195,121)}
 
 MAX_TRACE_LENGTH = 1500
 
@@ -245,9 +249,13 @@ mouseHeldDown = False
 mouseStartX, mouseStartY = 0, 0
 mouseStartCameraX, mouseStartCameraY = 0, 0
 
+renderHashes = []
+
 while running:
 
     hoverHashList = []
+    
+    renderHashes = []
 
     textHoverOffset = 0
 
@@ -330,50 +338,8 @@ while running:
                         mouseTextList.append(name)
 
                     if hash in levelLinks:
-                        inbound, outbound = levelLinks[hash]["recv"], levelLinks[hash]["send"]
 
-                        for (inboundX, inboundY, _), inboundHash, type in inbound:
-                            
-                            renderLinkLine(screen,type,(inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)),(screenX, screenY),pulseOffset)
-                            # points, midPoint = generateConnectionLine((inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)), (screenX, screenY),pulseOffset)
-
-                            # color = (152,195,121)
-
-                            # if type == "Delete":
-                            #     color = (224,108,117)
-
-                            # for pos, size in points:
-                            #         pygame.draw.circle(screen, color, pos, 2*size)
-
-                            # if type in LINK_SYMBOLS:
-                            #     icon, textColor = LINK_SYMBOLS[type]
-                            #     textRender, textSize = renderText(FONT[20],icon,textColor)
-
-                            #     newPointX, newPointY = midPoint[0] - textSize[0]//2, midPoint[1] - textSize[1]//2
-
-                            #     screen.blit(textRender,(newPointX, newPointY))
-
-                        for (outboundX, outboundY, _), outboundHash, type in outbound:
-                            
-                            renderLinkLine(screen,type,(screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),pulseOffset)
-
-                            # points, midPoint = generateConnectionLine((screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),pulseOffset)
-
-                            # color = (152,195,121)
-
-                            # if type == "Delete":
-                            #     color = (224,108,117)
-
-                            # for pos, size in points:
-                            #         pygame.draw.circle(screen, color, pos, 2*size)
-
-                            # if type in LINK_SYMBOLS:
-                            #     icon, textColor = LINK_SYMBOLS[type]
-                            #     textRender, textSize = renderText(FONT[20],icon,textColor)
-
-                            #     newPointX, newPointY = midPoint[0] - textSize[0]//2, midPoint[1] - textSize[1]//2
-
-                            #     screen.blit(textRender,(newPointX, newPointY))
+                        renderHashes.append((hash, (screenX, screenY)))
 
                         #Outbound (152,195,121)
                         #Inbound (97,175,227)
@@ -399,6 +365,17 @@ while running:
         promptX, promptY = SCREEN_WIDTH//2 - prompt.get_width()//2, SCREEN_HEIGHT//2 - prompt.get_height()//2
 
         screen.blit(prompt, (promptX, promptY))
+
+    for hash, (screenX, screenY) in renderHashes:
+        inbound, outbound = levelLinks[hash]["recv"], levelLinks[hash]["send"]
+
+        for (inboundX, inboundY, _), inboundHash, type in inbound:
+            
+            renderLinkLine(screen,type,(inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)),(screenX, screenY),pulseOffset)
+
+        for (outboundX, outboundY, _), outboundHash, type in outbound:
+            
+            renderLinkLine(screen,type,(screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),pulseOffset)
 
 
     for i, text in enumerate(mouseTextList):
