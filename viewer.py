@@ -175,7 +175,26 @@ def generateConnectionLine(start, end, offset):
         points.append(((pointX, pointY), radiusPercentage))
 
     return points, points[(len(points)//2)-1][0]
-    
+
+def renderLinkLine(screen, type, startPoint, endPoint, pulseOffset):
+
+    points, midPoint = generateConnectionLine(startPoint,endPoint,pulseOffset)
+
+    color = (152,195,121)
+
+    if type == "Delete":
+        color = (224,108,117)
+
+    for pos, size in points:
+            pygame.draw.circle(screen, color, pos, 2*size)
+
+    if type in LINK_SYMBOLS:
+        icon, textColor = LINK_SYMBOLS[type]
+        textRender, textSize = renderText(FONT[20],icon,textColor)
+
+        newPointX, newPointY = midPoint[0] - textSize[0]//2, midPoint[1] - textSize[1]//2
+
+        screen.blit(textRender,(newPointX, newPointY))
 
 pygame.init()
 
@@ -314,44 +333,47 @@ while running:
                         inbound, outbound = levelLinks[hash]["recv"], levelLinks[hash]["send"]
 
                         for (inboundX, inboundY, _), inboundHash, type in inbound:
+                            
+                            renderLinkLine(screen,type,(inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)),(screenX, screenY),pulseOffset)
+                            # points, midPoint = generateConnectionLine((inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)), (screenX, screenY),pulseOffset)
 
-                            points, midPoint = generateConnectionLine((inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)), (screenX, screenY),pulseOffset)
+                            # color = (152,195,121)
 
-                            color = (152,195,121)
+                            # if type == "Delete":
+                            #     color = (224,108,117)
 
-                            if type == "Delete":
-                                color = (224,108,117)
+                            # for pos, size in points:
+                            #         pygame.draw.circle(screen, color, pos, 2*size)
 
-                            for pos, size in points:
-                                    pygame.draw.circle(screen, color, pos, 2*size)
+                            # if type in LINK_SYMBOLS:
+                            #     icon, textColor = LINK_SYMBOLS[type]
+                            #     textRender, textSize = renderText(FONT[20],icon,textColor)
 
-                            if type in LINK_SYMBOLS:
-                                icon, textColor = LINK_SYMBOLS[type]
-                                textRender, textSize = renderText(FONT[20],icon,textColor)
+                            #     newPointX, newPointY = midPoint[0] - textSize[0]//2, midPoint[1] - textSize[1]//2
 
-                                newPointX, newPointY = midPoint[0] - textSize[0]//2, midPoint[1] - textSize[1]//2
-
-                                screen.blit(textRender,(newPointX, newPointY))
+                            #     screen.blit(textRender,(newPointX, newPointY))
 
                         for (outboundX, outboundY, _), outboundHash, type in outbound:
+                            
+                            renderLinkLine(screen,type,(screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),pulseOffset)
 
-                            points, midPoint = generateConnectionLine((screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),pulseOffset)
+                            # points, midPoint = generateConnectionLine((screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),pulseOffset)
 
-                            color = (152,195,121)
+                            # color = (152,195,121)
 
-                            if type == "Delete":
-                                color = (224,108,117)
+                            # if type == "Delete":
+                            #     color = (224,108,117)
 
-                            for pos, size in points:
-                                    pygame.draw.circle(screen, color, pos, 2*size)
+                            # for pos, size in points:
+                            #         pygame.draw.circle(screen, color, pos, 2*size)
 
-                            if type in LINK_SYMBOLS:
-                                icon, textColor = LINK_SYMBOLS[type]
-                                textRender, textSize = renderText(FONT[20],icon,textColor)
+                            # if type in LINK_SYMBOLS:
+                            #     icon, textColor = LINK_SYMBOLS[type]
+                            #     textRender, textSize = renderText(FONT[20],icon,textColor)
 
-                                newPointX, newPointY = midPoint[0] - textSize[0]//2, midPoint[1] - textSize[1]//2
+                            #     newPointX, newPointY = midPoint[0] - textSize[0]//2, midPoint[1] - textSize[1]//2
 
-                                screen.blit(textRender,(newPointX, newPointY))
+                            #     screen.blit(textRender,(newPointX, newPointY))
 
                         #Outbound (152,195,121)
                         #Inbound (97,175,227)
