@@ -88,24 +88,24 @@ def clipLines(rect : pygame.Rect, lines : list[list[tuple]]):
     
     return False
 
-def renderText(font : pygame.Font, text : str):
+def renderText(font : pygame.Font, text : str, color : tuple):
 
     characterWidth, characterHeight = font.size("e")
 
     darkOffsetX, darkOffsetY = characterWidth / 6, characterHeight / 6
 
-    mainTextSurface = font.render(text, False, (255,255,255))
+    mainTextSurface = font.render(text, False, color) #(255,255,255)
 
     mtWidth, mtHeight = mainTextSurface.get_size()
 
     finalSurface = pygame.Surface((mtWidth + darkOffsetX * 2, mtHeight + darkOffsetY * 2),pygame.SRCALPHA)
 
-    textShadowSurface = font.render(text, False, (128,128,128))
+    textShadowSurface = font.render(text, False, [math.ceil(x/2) for x in color])
 
     finalSurface.blit(textShadowSurface,(darkOffsetX, darkOffsetY))
     finalSurface.blit(mainTextSurface,(0,0))
 
-    return finalSurface
+    return finalSurface, mainTextSurface.get_size()
 
 def generateLogicLinks(levelData, objectCache):
 
@@ -174,7 +174,7 @@ def generateConnectionLine(start, end, offset):
 
         points.append(((pointX, pointY), radiusPercentage))
 
-    return points
+    return points, points[(len(points)//2)-1][0]
     
 
 pygame.init()
@@ -191,6 +191,8 @@ FONT = [pygame.font.Font("dogicapixelbold.ttf",x) for x in range(0,90)]
 BOTTOM_ANCHOR = ["ObjectDokan"]
 
 OBJECT_SIZES = {"ObjectDokan" : (2, 2), "ObjectDokanJoint" : (2, 2), "ObjectDokanMiddle" : (2, 2), "ObjectFountainDokan" : (2, 2), "BlockHatenaLong" : (3, 1)}
+
+LINK_SYMBOLS = {"Delete":("X",(224,108,117)),"Create":("+",(152,195,121))}
 
 MAX_TRACE_LENGTH = 1500
 
@@ -313,19 +315,7 @@ while running:
 
                         for (inboundX, inboundY, _), inboundHash, type in inbound:
 
-                            points = generateConnectionLine((inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)), (screenX, screenY),pulseOffset)
-
-                            color = (152,195,121)#(97,175,227)
-
-                            if type == "Delete":
-                                color = (224,108,117)
-
-                            for pos, size in points:
-                                    pygame.draw.circle(screen, color, pos, 2*size)
-
-                        for (outboundX, outboundY, _), outboundHash, type in outbound:
-
-                            points = generateConnectionLine((screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),pulseOffset)
+                            points, midPoint = generateConnectionLine((inboundX - cameraX, SCREEN_HEIGHT - (inboundY - cameraY)), (screenX, screenY),pulseOffset)
 
                             color = (152,195,121)
 
@@ -334,6 +324,34 @@ while running:
 
                             for pos, size in points:
                                     pygame.draw.circle(screen, color, pos, 2*size)
+
+                            if type in LINK_SYMBOLS:
+                                icon, textColor = LINK_SYMBOLS[type]
+                                textRender, textSize = renderText(FONT[20],icon,textColor)
+
+                                newPointX, newPointY = midPoint[0] - textSize[0]//2, midPoint[1] - textSize[1]//2
+
+                                screen.blit(textRender,(newPointX, newPointY))
+
+                        for (outboundX, outboundY, _), outboundHash, type in outbound:
+
+                            points, midPoint = generateConnectionLine((screenX, screenY),(outboundX - cameraX, SCREEN_HEIGHT - (outboundY - cameraY)),pulseOffset)
+
+                            color = (152,195,121)
+
+                            if type == "Delete":
+                                color = (224,108,117)
+
+                            for pos, size in points:
+                                    pygame.draw.circle(screen, color, pos, 2*size)
+
+                            if type in LINK_SYMBOLS:
+                                icon, textColor = LINK_SYMBOLS[type]
+                                textRender, textSize = renderText(FONT[20],icon,textColor)
+
+                                newPointX, newPointY = midPoint[0] - textSize[0]//2, midPoint[1] - textSize[1]//2
+
+                                screen.blit(textRender,(newPointX, newPointY))
 
                         #Outbound (152,195,121)
                         #Inbound (97,175,227)
@@ -362,9 +380,9 @@ while running:
 
 
     for i, text in enumerate(mouseTextList):
-        renderedText = renderText(FONT[15], text)
+        renderedText, size = renderText(FONT[15], text, (255,255,255))
 
-        width = renderedText.get_size()[0]
+        width = size[0]
 
         screen.blit(renderedText,(mouseX-width//2,mouseY - 20 - (i * 20)))
 
@@ -429,7 +447,7 @@ while running:
                     levelData = None
 
     pygame.display.flip()
-    dt = clock.tick(120)/1000
+    dt = clock.tick(240)/1000
 
     fps = clock.get_fps()
     pygame.display.set_caption(f"Wonder Level Viewer - FPS: {round(fps,1)}")
