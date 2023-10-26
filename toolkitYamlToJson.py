@@ -7,17 +7,19 @@ class LevelData:
         self.levelData = {}
         self.currentPath = {}
 
-    def navigatePath(self, stepBackAmount : int = 0, dontCheckList : bool = False):
+    def navigatePath(self, stepBackAmount : int = 0, ignoreIndex : bool = False):
         counter = 0
         currentLevel = self.levelData
         for level, val in self.currentPath.items():
             isList, index = val["isList"], val["index"]
-            if len(self.currentPath) - 1 - stepBackAmount == counter and stepBackAmount != 0:
+
+            if len(self.currentPath) - 1 - (stepBackAmount - 1) == counter:
                 return currentLevel
 
-            if (not isList):
+            if (not isList) or ignoreIndex:
                 currentLevel = currentLevel[level]
             else:
+                print(self.levelData)
                 currentLevel = currentLevel[level][index]
 
             counter += 1
@@ -30,13 +32,12 @@ class LevelData:
         self.currentPath[self.getTopOfPath()]["isList"] = True
 
     def isTopList(self):
-        return isinstance(self.currentPath[self.getTopOfPath()],list)
+        return self.currentPath[self.getTopOfPath()]["isList"]
     
     def incrementIndexOnPath(self, key):
         self.currentPath[key]["index"] += 1
-    
-    def addValueToList(self, key):
-        pass
+        self.navigatePath(0,True).append({})
+        print(self.navigatePath(0,True))
 
     def getTopOfPath(self):
         return list(self.currentPath.keys())[-1]
@@ -83,13 +84,13 @@ for i in range(0, 15):
         if not levelData.isTopList():
             levelData.convertTopToList()
 
-        print(levelData.currentPath)
-
         afterDash = line[line.find("-")+1:]
         
         levelData.navigatePath()["data"] = afterDash.lstrip(" ")
 
         levelData.incrementIndexOnPath(indentKeys[indentLevel-1])
+
+        print(levelData.levelData)
 
 
     elif firstCharacter.isalpha():
