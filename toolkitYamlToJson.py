@@ -67,8 +67,44 @@ def getLineData(line):
 
     return keyText, valueText, isList, isDict
 
-def processValueText(vt):
-    pass
+def processValueText(vt : str):
+
+    CONVERSIONS = {"False":"false","True":"true"}
+
+    stripped = vt.rstrip().lstrip()
+
+    type = "generic"
+
+    if "!" in stripped:
+        type = stripped[:stripped.find(" ")]
+
+        stripped = stripped[stripped.find(" "):]
+    
+    for conIn, conOut in CONVERSIONS.items():
+        stripped = stripped.replace(conIn, conOut)
+
+    converted = stripped
+
+    try:
+        converted = json.loads(stripped)
+    except:
+        pass
+    
+    return {"value":converted,"type":type}
+
+def dictPreProcess(dct : str):
+
+    REPLACEMENTS = {"{":'{"',
+                    ": ":'": "',
+                    ", ":'", "',
+                    "}":'"}'}
+
+    stripped = dct.rstrip()
+    
+    for repIn, repOut in REPLACEMENTS.items():
+        stripped = stripped.replace(repIn, repOut)
+    
+    return json.loads(stripped)
 
 yamlData = None
 
@@ -103,6 +139,11 @@ for i in range(0, 77):
             #levelData.setDataInTopList({})
             itemCarry = True
         else:
+            if "{" in itemData:
+                itemData = dictPreProcess(itemData)
+            else:
+                itemData = processValueText(itemData)
+
             levelData.setDataInTopList(itemData)
         
     if firstCharacter != "-" or itemCarry:
@@ -120,7 +161,7 @@ for i in range(0, 77):
         # print(f"{keyText} : {repr(valueText)} :: IsList : {isList} IsDict : {isDict}")
 
         if not isList and not isDict:
-            levelData.getCurrentStructure()[keyText] = valueText
+            levelData.getCurrentStructure()[keyText] = processValueText(valueText)
 
         else:
             levelData.addStructure(keyText, isList)
