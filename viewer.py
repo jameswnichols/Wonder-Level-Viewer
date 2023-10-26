@@ -194,7 +194,7 @@ def renderLinkLine(screen, type, startPoint, endPoint, pulseOffset):
         icon, textColor = LINK_SYMBOLS[type]
         textRender, textSize = renderText(FONT[20],icon,textColor)
 
-        newPointX, newPointY = midPoint[0] - textSize[0]//2, midPoint[1] - textSize[1]//2
+        newPointX, newPointY = midPoint[0] - textSize[0]//2, midPoint[1] - textRender.get_height()//2
 
         screen.blit(textRender,(newPointX, newPointY))
 
@@ -209,7 +209,7 @@ UNIT_SIZE = 32
 
 FONT = [pygame.font.Font("dogicapixelbold.ttf",x) for x in range(0,90)]
 
-BOTTOM_ANCHOR = ["ObjectDokan"]
+BOTTOM_ANCHOR = ["ObjectDokan","ObjectTalkingFlower"]
 
 OBJECT_SIZES = {"ObjectDokan" : (2, 2), "ObjectDokanJoint" : (2, 2), "ObjectDokanMiddle" : (2, 2), "ObjectFountainDokan" : (2, 2), "BlockHatenaLong" : (3, 1)}
 
