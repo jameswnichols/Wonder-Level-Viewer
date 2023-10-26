@@ -45,6 +45,10 @@ class LevelData:
     def addToPath(self, key):
         self.currentPath[key] = {"isList":False, "index": 0}
 
+    def removeFromPath(self, amount):
+        for i in range(0, amount):
+            del self.currentPath[self.getTopOfPath()]
+
 
 def extractKeyValuePair(text):
     pass
@@ -64,7 +68,7 @@ currentListIndex = 0
 with open("TESTING.yaml","r") as f:
     yamlData = f.readlines()
 
-for i in range(0, 15):
+for i in range(0, 41):
     line = yamlData[i]
 
     leadingSpaces = len(line) - len(line.lstrip(' '))
@@ -73,9 +77,12 @@ for i in range(0, 15):
 
     firstCharacter = line[leadingSpaces]
 
-    if indentLevel != lastIndent:
+    if indentLevel > lastIndent:
         levelData.addToPath(previousKey)
         indentKeys[lastIndent] = previousKey
+    if indentLevel < lastIndent:
+        levelData.removeFromPath(lastIndent - indentLevel)
+
 
     lastIndent = indentLevel
 
