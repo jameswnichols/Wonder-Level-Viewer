@@ -19,7 +19,6 @@ class LevelData:
             if (not isList) or ignoreIndex:
                 currentLevel = currentLevel[level]
             else:
-                print(self.levelData)
                 currentLevel = currentLevel[level][index]
 
             counter += 1
@@ -37,7 +36,6 @@ class LevelData:
     def incrementIndexOnPath(self, key):
         self.currentPath[key]["index"] += 1
         self.navigatePath(0,True).append({})
-        print(self.navigatePath(0,True))
 
     def getTopOfPath(self):
         return list(self.currentPath.keys())[-1]
@@ -97,9 +95,6 @@ for i in range(0, 41):
 
         levelData.incrementIndexOnPath(indentKeys[indentLevel-1])
 
-        print(levelData.levelData)
-
-
     elif firstCharacter.isalpha():
         #Assignment stuff
         keyText = line[leadingSpaces:line.find(":")]
@@ -112,8 +107,6 @@ for i in range(0, 41):
             valueText = {}
 
         levelData.navigatePath()[keyText] = valueText
-
-        #print(f"{keyText} : {repr(valueText)}")
 
 print(levelData.levelData)
 #     currentIndentLevel = 0
