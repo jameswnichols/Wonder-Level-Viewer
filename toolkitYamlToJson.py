@@ -104,7 +104,14 @@ def dictPreProcess(dct : str):
     for repIn, repOut in REPLACEMENTS.items():
         stripped = stripped.replace(repIn, repOut)
     
-    return json.loads(stripped)
+    convertedDict = json.loads(stripped)
+
+    processedDict = {}
+
+    for key, value in convertedDict.items():
+        processedDict[key] = processValueText(value)
+
+    return processedDict
 
 yamlData = None
 
