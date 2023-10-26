@@ -72,12 +72,14 @@ lastIndentLevel = 0
 with open("TESTING.yaml","r") as f:
     yamlData = f.readlines()
 
-for i in range(0, 41):
+for i in range(0, 77):
     line = yamlData[i]
 
     leadingSpaces, indentLevel, firstCharacter = getIndentAndStartCharacter(line)
 
-    #TODO Add stuff
+    newLine = line[leadingSpaces:len(line)]
+
+    itemCarry = False
 
     if firstCharacter == "-":
         #Is List Item
@@ -90,20 +92,24 @@ for i in range(0, 41):
 
         itemData = line[line.find("- ")+2:]
 
-        print(itemData)
-
-        levelData.setDataInTopList({})
-
+        if ":" in itemData and not "{" in itemData:
+            #levelData.setDataInTopList({})
+            itemCarry = True
+        else:
+            levelData.setDataInTopList(itemData)
         
-    else:
+    if firstCharacter != "-" or itemCarry:
 
-        newLine = line[leadingSpaces:len(line)]
+        lineData = newLine
 
-        keyText, valueText, isList, isDict = getLineData(newLine)
+        if itemCarry:
+            lineData = itemData
 
-        if indentLevel < lastIndentLevel:
+        keyText, valueText, isList, isDict = getLineData(lineData)
+
+        if indentLevel < lastIndentLevel and not itemCarry:
             levelData.removeTopStructure()
-
+            
         # print(f"{keyText} : {repr(valueText)} :: IsList : {isList} IsDict : {isDict}")
 
         if not isList and not isDict:
