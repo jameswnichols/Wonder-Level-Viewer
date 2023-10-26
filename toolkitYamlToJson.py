@@ -53,10 +53,10 @@ def getIndentAndStartCharacter(line):
     return leadingSpaces, indentLevel, firstCharacter
     
 def getLineData(line):
-    colonLocation = newLine.find(":")
+    colonLocation = line.find(":")
 
-    keyText = newLine[0:colonLocation]
-    valueText = newLine[colonLocation+1:len(newLine)]
+    keyText = line[0:colonLocation]
+    valueText = line[colonLocation+1:len(line)]
 
     isList = getIndentAndStartCharacter(yamlData[i + 1])[2] == "-"
     isDict = valueText == "\n" and not isList
@@ -88,7 +88,9 @@ for i in range(0, 41):
 
         levelData.increaseIndexOfTopList()
 
-        itemData = line[line.find("- ")+1:]
+        itemData = line[line.find("- ")+2:]
+
+        print(itemData)
 
         levelData.setDataInTopList({})
 
@@ -108,7 +110,6 @@ for i in range(0, 41):
             levelData.getCurrentStructure()[keyText] = valueText
 
         else:
-            print(f"{keyText} :: {indentLevel}")
             levelData.addStructure(keyText, isList)
 
     lastIndentLevel = indentLevel
