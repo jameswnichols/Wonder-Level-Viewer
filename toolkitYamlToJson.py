@@ -33,9 +33,15 @@ class LevelData:
     def removeTopStructure(self):
         del self.currentPath[list(self.currentPath.keys())[-1]]
 
+    def getTopStructure(self):
+        return self.currentPath[list(self.currentPath.keys())[-1]]
+
     def increaseIndexOfTopList(self):
         self.currentPath[list(self.currentPath.keys())[-1]]["index"] += 1
         self.getCurrentStructure(ignoreFinalIndex=True).append({})
+
+    def setDataInTopList(self, data):
+        self.getCurrentStructure(ignoreFinalIndex=True)[self.getTopStructure()["index"]] = data
 
 def getIndentAndStartCharacter(line):
     leadingSpaces = len(line) - len(line.lstrip(' '))
@@ -64,6 +70,7 @@ for i in range(0, 41):
     #TODO Add stuff
 
     if firstCharacter == "-":
+        #Is List Item
         indentLevel += 1
 
         if indentLevel < lastIndentLevel:
@@ -72,9 +79,10 @@ for i in range(0, 41):
         levelData.increaseIndexOfTopList()
 
         itemData = line[line.find("- ")+1:]
-        print(itemData)
 
-        #Is list item
+        levelData.setDataInTopList({})
+
+        
     else:
         colonLocation = line.find(":")
 
