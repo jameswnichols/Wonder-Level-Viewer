@@ -25,10 +25,11 @@ class LevelData:
 
         return currentLevel
     
-    def convertTopToList(self):
+    def convertTopToList(self, indentLevel):
         prevData = self.navigatePath(1)
         prevData[self.getTopOfPath()] = [{}]
         self.currentPath[self.getTopOfPath()]["isList"] = True
+        self.currentPath[self.getTopOfPath()]["itemIndent"] = indentLevel
 
     def isTopList(self):
         return self.currentPath[self.getTopOfPath()]["isList"]
@@ -41,11 +42,14 @@ class LevelData:
         return list(self.currentPath.keys())[-1]
     
     def addToPath(self, key):
-        self.currentPath[key] = {"isList":False, "index": 0}
+        self.currentPath[key] = {"isList":False, "index": -1, "itemIndent":-1}
 
     def removeFromPath(self, amount):
         for i in range(0, amount):
             del self.currentPath[self.getTopOfPath()]
+
+    def getTopIndentLevel(self):
+        return self.currentPath[self.getTopOfPath()]["itemIndent"]
 
 
 def extractKeyValuePair(text):
@@ -76,26 +80,48 @@ for i in range(0, 41):
     firstCharacter = line[leadingSpaces]
 
     if indentLevel > lastIndent:
-        levelData.addToPath(previousKey)
-        indentKeys[lastIndent] = previousKey
-    if indentLevel < lastIndent:
-        levelData.removeFromPath(lastIndent - indentLevel)
 
+        change = indentLevel-lastIndent
+
+        isList = True
+        try:
+            if levelData.isTopList():
+
+                listIndexLevel = levelData.getTopIndentLevel()
+
+                if change <= 1:
+                    indentLevel = listIndexLevel
+                else:
+                    isList = False
+            else:
+                isList = False
+                
+        except:
+            isList = False
+        
+        if not isList:
+            levelData.addToPath(previousKey)
+            indentKeys[lastIndent] = previousKey
+
+    elif indentLevel < lastIndent:
+        levelData.removeFromPath(lastIndent - indentLevel)
 
     lastIndent = indentLevel
 
     if firstCharacter == "-":
-
         if not levelData.isTopList():
-            levelData.convertTopToList()
+            
+            print(indentLevel)
+            levelData.convertTopToList(indentLevel)
 
         afterDash = line[line.find("-")+1:]
         
         levelData.navigatePath()["data"] = afterDash.lstrip(" ")
 
-        levelData.incrementIndexOnPath(indentKeys[indentLevel-1])
+        levelData.incrementIndexOnPath(levelData.getTopOfPath())
 
     elif firstCharacter.isalpha():
+
         #Assignment stuff
         keyText = line[leadingSpaces:line.find(":")]
         
@@ -106,6 +132,8 @@ for i in range(0, 41):
             
             valueText = {}
 
+        #print(levelData.currentPath)
+        #print(levelData.navigatePath())
         levelData.navigatePath()[keyText] = valueText
 
 print(levelData.levelData)
