@@ -34,8 +34,11 @@ class LevelData:
 
         self.currentPath[key] = {"isList":isList,"index":-1}
 
-    def removeTopStructure(self):
-        del self.currentPath[list(self.currentPath.keys())[-1]]
+    def removeTopStructure(self, amount):
+        print(levelData.currentPath)
+        print(indentKeys)
+        for i in range(0, amount):
+            del self.currentPath[list(self.currentPath.keys())[-1]]
 
     def getTopStructure(self):
         return self.currentPath[list(self.currentPath.keys())[-1]]
@@ -56,13 +59,15 @@ def getIndentAndStartCharacter(line):
 
     return leadingSpaces, indentLevel, firstCharacter
     
-def getLineData(line):
+def getLineData(line, index, yamlData):
     colonLocation = line.find(":")
 
     keyText = line[0:colonLocation]
     valueText = line[colonLocation+1:len(line)]
 
-    isList = getIndentAndStartCharacter(yamlData[i + 1])[2] == "-"
+    newIndex = index if index + 1 == len(yamlData) else index + 1
+
+    isList = getIndentAndStartCharacter(yamlData[newIndex])[2] == "-"
     isDict = valueText == "\n" and not isList
 
     return keyText, valueText, isList, isDict
@@ -119,6 +124,8 @@ levelData = LevelData()
 
 lastIndentLevel = 0
 
+indentKeys = {}
+
 with open("TESTING.yaml","r") as f:
     yamlData = f.readlines()
 
@@ -136,7 +143,10 @@ for i in range(0, 77):
         indentLevel += 1
 
         if indentLevel < lastIndentLevel:
-            levelData.removeTopStructure()
+            
+            change = int(min((lastIndentLevel-indentLevel)/2,1))
+            print(f"{lastIndentLevel} -> {indentLevel} : {change}")
+            levelData.removeTopStructure(1)
 
         levelData.increaseIndexOfTopList()
 
@@ -160,10 +170,16 @@ for i in range(0, 77):
         if itemCarry:
             lineData = itemData
 
-        keyText, valueText, isList, isDict = getLineData(lineData)
+        keyText, valueText, isList, isDict = getLineData(lineData, i, yamlData)
+
+        indentKeys[indentLevel] = keyText
 
         if indentLevel < lastIndentLevel and not itemCarry:
-            levelData.removeTopStructure()
+            change = int(min((lastIndentLevel-indentLevel)/2,1))
+
+            print(f"{lastIndentLevel} -> {indentLevel} : {change}")
+
+            levelData.removeTopStructure(1)
 
         # print(f"{keyText} : {repr(valueText)} :: IsList : {isList} IsDict : {isDict}")
 
