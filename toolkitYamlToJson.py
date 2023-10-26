@@ -1,6 +1,10 @@
 import json
 
 #5 places of float precision.
+#!u - Unsigned int(?)
+#!l - Signed 64bit int.
+#!ul - Unsigned 64bit int.
+#!f64 - binary64 floating point value.
 
 class LevelData:
     def __init__(self):
@@ -63,6 +67,9 @@ def getLineData(line):
 
     return keyText, valueText, isList, isDict
 
+def processValueText(vt):
+    pass
+
 yamlData = None
 
 levelData = LevelData()
@@ -109,7 +116,7 @@ for i in range(0, 77):
 
         if indentLevel < lastIndentLevel and not itemCarry:
             levelData.removeTopStructure()
-            
+
         # print(f"{keyText} : {repr(valueText)} :: IsList : {isList} IsDict : {isDict}")
 
         if not isList and not isDict:
@@ -119,7 +126,5 @@ for i in range(0, 77):
             levelData.addStructure(keyText, isList)
 
     lastIndentLevel = indentLevel
-
-    #
 
 print(levelData.levelData)
