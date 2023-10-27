@@ -85,7 +85,7 @@ def getLineData(line, index, yamlData):
 
 def processValueText(vt : str, ignoreType):
 
-    CONVERSIONS = {"False":"false","True":"true","None":"null"}
+    CONVERSIONS = {"False":"false","True":"true"}
 
     stripped = vt.rstrip().lstrip()
 
@@ -106,6 +106,12 @@ def processValueText(vt : str, ignoreType):
             stripped = stripped.replace(conIn, conOut)
 
         converted = stripped
+
+        if converted == "":
+            converted = None
+
+        if converted == "''":
+            converted = ""
 
         try:
             converted = json.loads(stripped)
@@ -162,7 +168,6 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
 
             if indentLevel < lastIndentLevel:
                 
-                change = lastIndentLevel - indentLevel
                 levelData.removeTopStructure(indentLevel)
 
             levelData.increaseIndexOfTopList()
@@ -198,7 +203,6 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
             keyText, valueText, isList, isDict = getLineData(lineData, i, yamlData)
 
             if indentLevel < lastIndentLevel and not itemCarry:
-                change = lastIndentLevel - indentLevel
 
                 levelData.removeTopStructure(indentLevel)
 
@@ -222,6 +226,6 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     return levelData.levelData
 
 with open("output.json","w") as f:
-    json.dump(yamlToJson("TESTING.yaml",ignoreTyping=True),f, indent=3)
+    json.dump(yamlToJson("TESTING.yaml",ignoreTyping=True),f) #, indent=3
 
 #print(levelData.levelData)
