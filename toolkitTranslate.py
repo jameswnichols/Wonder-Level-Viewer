@@ -1,4 +1,5 @@
 import json
+import random
 
 #5 places of float precision.
 #!u - Unsigned int(?)
@@ -227,6 +228,9 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     
     return levelData.levelData
 
+def generateID():
+    return "".join([str(random.randint(0, 9)) for x in range(0,16)])
+
 def jsonToYaml(filePath : str):
     
     levelData = None
@@ -234,7 +238,7 @@ def jsonToYaml(filePath : str):
     lines = []
 
     with open(filePath,"r") as f:
-        levelData = json.load(f)
+        levelData = json.load(f,)
 
     pathsToExplore = {0:levelData}
 
@@ -246,26 +250,30 @@ def jsonToYaml(filePath : str):
 
         if isinstance(currentPath, dict):
             for key, value in currentPath.items():
-                if "value" in value and "type" in value:
-                    lines.append(f"{key}: {value['value']}\n")
-                    #print(f"{key}={value['value']}")
+                if isinstance(value, dict):
+                    if "value" in value and "type" in value:
+                        lines.append(f"{key}: {value['value']}\n")
+                        #print(f"{key}={value['value']}")
+                    else:
+                        #print(f"Path for {key}")
+                        lines.append(f"{key}: \n")
+                        pathsToExplore[generateID()] = currentPath[key]
                 else:
-                    #print(f"Path for {key}")
-                    pathsToExplore[key] = currentPath[key]
-        
+                    pathsToExplore[generateID()] = currentPath[key]
+
         elif isinstance(currentPath, list):
             for i, value in enumerate(currentPath):
 
                 if isinstance(value, dict):
                     if "value" in value and "type" in value:
-                        lines.append(f"{firstKey}[{i}]: {value['value']}\n")
-                        #print(f"{firstKey}[{i}]={value['value']}")
+                        lines.append(f"-{firstKey}[{i}]: {value['value']}\n")
                     else:
-                        #print(f"Path for {firstKey}[{i}]")
-                        pathsToExplore[f"{firstKey}[{i}]"] = currentPath[i]
+                        key = list(value.keys())[0]
+                        lines.append(f"-{key}: \n")
+                        pathsToExplore[generateID()] = currentPath[i]
                 else:
-                    #print(f"Path for {firstKey}[{i}]")
-                    pathsToExplore[f"{firstKey}[{i}]"] = currentPath[i]
+                    #lines.append(f"-{key}: ")
+                    pathsToExplore[generateID()] = currentPath[i]
 
     #print(list(pathsToExplore.keys()))
 
