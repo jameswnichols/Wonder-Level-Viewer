@@ -358,6 +358,13 @@ def jsonToYaml(filePath : str):
         
         pathsToExplore = newTraces + pathsToExplore
 
+    for i in range(0, 4):
+        if ": false" in lines[i]:
+            lines[i] = lines[i].replace(": false",": False")
+
+        if ": true" in lines[i]:
+            lines[i] = lines[i].replace(": true",": True")
+
     return lines
 
 with open("yamlToJson.json","w") as f:
