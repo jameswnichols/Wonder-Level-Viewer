@@ -238,7 +238,9 @@ def jsonToYaml(filePath : str):
     lines = []
 
     with open(filePath,"r") as f:
-        levelData = json.load(f,)
+        levelData = json.load(f)
+
+    print(levelData)
 
     pathsToExplore = {0:levelData}
 
@@ -279,7 +281,6 @@ def jsonToYaml(filePath : str):
 
     with open("tempOutput.yaml","w") as f:
         f.writelines(lines)
-
     
 jsonToYaml("tempOutput.json")     
 
