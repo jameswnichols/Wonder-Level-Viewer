@@ -29,3 +29,5 @@ tempOutput.json
 tempOutput.yaml
 JsonToYaml.yaml
 yamlToJson.json
+Test Cases/
+REPLICATETEST.yaml

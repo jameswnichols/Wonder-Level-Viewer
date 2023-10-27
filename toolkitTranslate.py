@@ -361,7 +361,7 @@ def jsonToYaml(filePath : str):
     return lines
 
 with open("yamlToJson.json","w") as f:
-    json.dump(yamlToJson("BACKUP.yaml",ignoreTyping=False),f)
+    json.dump(yamlToJson("REPLICATETEST.yaml",ignoreTyping=False),f)
 
 with open("JsonToYaml.yaml","w") as f:
     f.writelines(jsonToYaml("yamlToJson.json"))
