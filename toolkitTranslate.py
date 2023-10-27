@@ -208,10 +208,6 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
 
                 levelData.removeTopStructure(indentLevel)
 
-            #22807
-
-            # print(f"{keyText} : {repr(valueText)} :: IsList : {isList} IsDict : {isDict}")
-
             if not isList and not isDict:
                 levelData.getCurrentStructure()[keyText] = processValueText(valueText,ignoreTyping)
 
@@ -228,6 +224,5 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     return levelData.levelData
 
 with open("output.json","w") as f:
-    json.dump(yamlToJson("TESTING.yaml",ignoreTyping=True),f) #, indent=3
+    json.dump(yamlToJson("TESTING.yaml",ignoreTyping=True),f)
 
-#print(levelData.levelData)
