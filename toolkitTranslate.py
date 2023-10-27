@@ -360,9 +360,11 @@ def jsonToYaml(filePath : str):
 
     return lines
 
-with open("tempOutput.yaml","w") as f:
-    f.writelines(jsonToYaml("tempOutput.json"))
+with open("yamlToJson.json","w") as f:
+    json.dump(yamlToJson("BACKUP.yaml",ignoreTyping=False),f)
 
-# with open("output.json","w") as f:
-#     json.dump(yamlToJson("TESTING.yaml",ignoreTyping=False),f)
+with open("JsonToYaml.yaml","w") as f:
+    f.writelines(jsonToYaml("yamlToJson.json"))
+
+
 
