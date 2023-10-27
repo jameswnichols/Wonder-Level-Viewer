@@ -70,7 +70,7 @@ def getIndentAndStartCharacter(line):
 
     return leadingSpaces, indentLevel, firstCharacter
     
-def getLineData(line, index, yamlData):
+def getLineData(line, index, yamlData, lineIndent):
     colonLocation = line.find(":")
 
     keyText = line[0:colonLocation]
@@ -78,7 +78,9 @@ def getLineData(line, index, yamlData):
 
     newIndex = index if index + 1 == len(yamlData) else index + 1
 
-    isList = getIndentAndStartCharacter(yamlData[newIndex])[2] == "-"
+    _, indentLevel, firstChar = getIndentAndStartCharacter(yamlData[newIndex])
+
+    isList = (firstChar == "-" and lineIndent < indentLevel)
     isDict = valueText == "\n" and not isList
 
     return keyText, valueText, isList, isDict
@@ -153,8 +155,7 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     with open(filePath,"r") as f:
         yamlData = f.readlines()
 
-    for i, line in enumerate(yamlData): #21632 77 , line in enumerate(yamlData)
-        #line = yamlData[i]
+    for i, line in enumerate(yamlData):
 
         leadingSpaces, indentLevel, firstCharacter = getIndentAndStartCharacter(line)
 
@@ -189,6 +190,7 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
 
                     itemData = {"value":processedData,"type":"inlineDict"} if not ignoreTyping else processedData
                 else:
+
                     itemData = processValueText(itemData,ignoreTyping)
 
                 levelData.setDataInTopList(itemData)
@@ -200,7 +202,7 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
             if itemCarry:
                 lineData = itemData
 
-            keyText, valueText, isList, isDict = getLineData(lineData, i, yamlData)
+            keyText, valueText, isList, isDict = getLineData(lineData, i, yamlData, indentLevel)
 
             if indentLevel < lastIndentLevel and not itemCarry:
 
