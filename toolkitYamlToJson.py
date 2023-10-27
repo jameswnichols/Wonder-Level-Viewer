@@ -36,8 +36,6 @@ class LevelData:
 
     def removeTopStructure(self, newIndent):
 
-        print(self.currentPath)
-
         keys = list(self.currentPath.keys())
 
         for i in range(0, len(keys)):
@@ -87,26 +85,32 @@ def getLineData(line, index, yamlData):
 
 def processValueText(vt : str):
 
-    CONVERSIONS = {"False":"false","True":"true"}
+    CONVERSIONS = {"False":"false","True":"true","None":"null"}
 
     stripped = vt.rstrip().lstrip()
 
     type = "generic"
 
-    if "!" in stripped:
-        type = stripped[:stripped.find(" ")]
+    if "{" in vt:
+        
+        converted = dictPreProcess(vt)
+        type = "inlineDict"
 
-        stripped = stripped[stripped.find(" "):]
-    
-    for conIn, conOut in CONVERSIONS.items():
-        stripped = stripped.replace(conIn, conOut)
+    else:
+        if "!" in stripped:
+            type = stripped[:stripped.find(" ")]
 
-    converted = stripped
+            stripped = stripped[stripped.find(" "):]
+        
+        for conIn, conOut in CONVERSIONS.items():
+            stripped = stripped.replace(conIn, conOut)
 
-    try:
-        converted = json.loads(stripped)
-    except:
-        pass
+        converted = stripped
+
+        try:
+            converted = json.loads(stripped)
+        except:
+            pass
     
     return {"value":converted,"type":type}
 
@@ -142,7 +146,7 @@ indentKeys = {}
 with open("TESTING.yaml","r") as f:
     yamlData = f.readlines()
 
-for i, line in enumerate(yamlData): #21632 77
+for i, line in enumerate(yamlData): #21632 77 , line in enumerate(yamlData)
     #line = yamlData[i]
 
     leadingSpaces, indentLevel, firstCharacter = getIndentAndStartCharacter(line)
@@ -158,19 +162,23 @@ for i, line in enumerate(yamlData): #21632 77
         if indentLevel < lastIndentLevel:
             
             change = lastIndentLevel - indentLevel
-            print(f"{lastIndentLevel} -> {indentLevel} : {change}")
             levelData.removeTopStructure(indentLevel)
 
         levelData.increaseIndexOfTopList()
 
         itemData = line[line.find("- ")+2:]
 
-        if ":" in itemData and not "{" in itemData:
-            #levelData.setDataInTopList({})
+        curleyBracketIndex = itemData.find("{")
+
+        colonIndex = itemData.find(":")
+
+        bothExist = curleyBracketIndex != -1 and colonIndex != -1
+        
+        if (":" in itemData and not bothExist) or (bothExist and (colonIndex < curleyBracketIndex)):
             itemCarry = True
         else:
-            if "{" in itemData:
-                itemData = dictPreProcess(itemData)
+            if bothExist and (curleyBracketIndex < colonIndex):
+                itemData = {"value":dictPreProcess(itemData),"type":"inlineDict"}
             else:
                 itemData = processValueText(itemData)
 
@@ -185,14 +193,12 @@ for i, line in enumerate(yamlData): #21632 77
 
         keyText, valueText, isList, isDict = getLineData(lineData, i, yamlData)
 
-        
-
         if indentLevel < lastIndentLevel and not itemCarry:
             change = lastIndentLevel - indentLevel
 
-            print(f"{lastIndentLevel} -> {indentLevel} : {change}")
-
             levelData.removeTopStructure(indentLevel)
+
+        #22807
 
         # print(f"{keyText} : {repr(valueText)} :: IsList : {isList} IsDict : {isDict}")
 
@@ -210,6 +216,6 @@ for i, line in enumerate(yamlData): #21632 77
     lastIndentLevel = indentLevel
 
 with open("output.json","w") as f:
-    json.dump(levelData.levelData,f)
+    json.dump(levelData.levelData,f, indent=3)
 
 #print(levelData.levelData)
