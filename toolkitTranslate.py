@@ -230,9 +230,11 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
 
 def traceThrough(data, path):
     finalLocation = data
-    for trace in path:
+    indent = 0
+    for indentIncrease, trace in path:
+        indentIncrease += indentIncrease
         finalLocation = finalLocation[trace]
-    return finalLocation
+    return indent, finalLocation
 
 def jsonToYaml(filePath : str):
     
@@ -260,15 +262,22 @@ def jsonToYaml(filePath : str):
 
     pathsToExplore = [[]]
 
-    iterations = 20
+    iterations = 50
+
+    lines = []
 
     while pathsToExplore and iterations > 0:
         
         traceRoute = pathsToExplore.pop(0)
 
-        currentPoint = traceThrough(levelData, traceRoute)
+        indent, currentPoint = traceThrough(levelData, traceRoute)
 
         newTraces = []
+
+        try:
+            finalPointName = traceRoute[-1]
+        except:
+            finalPointName = ""
 
         if isinstance(currentPoint, dict):
 
@@ -276,8 +285,14 @@ def jsonToYaml(filePath : str):
 
             if "value" in pointKeys and "type" in pointKeys:
                 #HANDLE ASSIGNMENT
-                pass
+                lines.append(f"{finalPointName}: {currentPoint['value']}\n")
+
             else:
+
+                ending = "" if isinstance(finalPointName,int) else "\n"
+
+                lines.append(f"{finalPointName}: {ending}")
+
                 for key, value in currentPoint.items():
                     
                     newRoute = traceRoute + [key]
@@ -285,7 +300,7 @@ def jsonToYaml(filePath : str):
                     newTraces.append(newRoute)
         
         if isinstance(currentPoint, list):
-
+            lines.append(f"{finalPointName}: \n")
             for i in range(0, len(currentPoint)):
                 newRoute = traceRoute + [i]
                 
@@ -293,9 +308,10 @@ def jsonToYaml(filePath : str):
         
         pathsToExplore = newTraces + pathsToExplore
 
-        print(f"{pathsToExplore}")
-
         iterations -= 1
+
+    with open("tempOutput.yaml","w") as f:
+        f.writelines(lines)
 
     #Done
 
