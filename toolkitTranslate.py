@@ -228,8 +228,11 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     
     return levelData.levelData
 
-def generateID():
-    return "".join([str(random.randint(0, 9)) for x in range(0,16)])
+def traceThrough(data, path):
+    finalLocation = data
+    for trace in path:
+        finalLocation = finalLocation[trace]
+    return finalLocation
 
 def jsonToYaml(filePath : str):
     
@@ -237,45 +240,66 @@ def jsonToYaml(filePath : str):
 
     lines = []
 
+    #["root","Actors",0,"Dynamic","InitDir"]
+    #["root","Actors",0,"Dynamic"]
+    #["root","Actors",0,"AreaHash"]
+    #["root","Actors"]
+    #...
+    #["root","ActorToRailLinks",1]
+    #["root","ActorToRailLinks",0]
+    #["root","ActorToRailLinks"]
+    #["root"]
+    #["HasReferenceNodes"]
+    #["SupportPaths"]
+    #["IsBigEndian"]
+    #["Version"]
+    #Pop from the bottom
+
     with open(filePath,"r") as f:
         levelData = json.load(f)
 
-    print(levelData)
+    pathsToExplore = [[]]
 
-    pathsToExplore = {0:levelData}
+    iterations = 20
 
-    while pathsToExplore:
+    while pathsToExplore and iterations > 0:
+        
+        traceRoute = pathsToExplore.pop(0)
 
-        firstKey = list(pathsToExplore.keys())[0]
+        currentPoint = traceThrough(levelData, traceRoute)
 
-        currentPath = pathsToExplore.pop(firstKey)
+        newTraces = []
 
-        if isinstance(currentPath, dict):
-            for key, value in currentPath.items():
-                if isinstance(value, dict):
-                    if "value" in value and "type" in value:
-                        lines.append(f"{key}: {value['value']}\n")
-                        #print(f"{key}={value['value']}")
-                    else:
-                        #print(f"Path for {key}")
-                        lines.append(f"{key}: \n")
-                        pathsToExplore[generateID()] = currentPath[key]
-                else:
-                    pathsToExplore[generateID()] = currentPath[key]
+        if isinstance(currentPoint, dict):
 
-        elif isinstance(currentPath, list):
-            for i, value in enumerate(currentPath):
+            pointKeys = list(currentPoint.keys())
 
-                if isinstance(value, dict):
-                    if "value" in value and "type" in value:
-                        lines.append(f"-{firstKey}[{i}]: {value['value']}\n")
-                    else:
-                        key = list(value.keys())[0]
-                        lines.append(f"-{key}: \n")
-                        pathsToExplore[generateID()] = currentPath[i]
-                else:
-                    #lines.append(f"-{key}: ")
-                    pathsToExplore[generateID()] = currentPath[i]
+            if "value" in pointKeys and "type" in pointKeys:
+                #HANDLE ASSIGNMENT
+                pass
+            else:
+                for key, value in currentPoint.items():
+                    
+                    newRoute = traceRoute + [key]
+
+                    newTraces.append(newRoute)
+        
+        if isinstance(currentPoint, list):
+
+            for i in range(0, len(currentPoint)):
+                newRoute = traceRoute + [i]
+                
+                newTraces.append(newRoute)
+        
+        pathsToExplore = newTraces + pathsToExplore
+
+        print(f"{pathsToExplore}")
+
+        iterations -= 1
+
+    #Done
+
+        
 
     #print(list(pathsToExplore.keys()))
 
