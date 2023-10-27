@@ -261,11 +261,9 @@ def jsonToYaml(filePath : str):
 
     pathsToExplore = [[]]
 
-    iterations = 50
-
     lines = []
 
-    while pathsToExplore and iterations > 0:
+    while pathsToExplore:
         
         traceRoute = pathsToExplore.pop(0)
 
@@ -284,13 +282,23 @@ def jsonToYaml(filePath : str):
 
             if "value" in pointKeys and "type" in pointKeys:
                 #HANDLE ASSIGNMENT
-                lines.append(f"{finalPointName}: {currentPoint['value']}\n")
+                text = f"{finalPointName}: "
+                if isinstance(finalPointName,int):
+                    text = "- "
+
+                lines.append(f"{text}{currentPoint['value']}\n")
 
             else:
+                
+                text = f"{finalPointName}: \n"
 
-                ending = "" if isinstance(finalPointName,int) else "\n"
+                #IF LIST
+                if isinstance(finalPointName,int):
+                    text = "- "
 
-                lines.append(f"{finalPointName}: {ending}")
+                #ending = "" if isinstance(finalPointName,int) else "\n"
+
+                lines.append(text)#f"{finalPointName}: {ending}"
 
                 for key, value in currentPoint.items():
                     
@@ -306,8 +314,6 @@ def jsonToYaml(filePath : str):
                 newTraces.append(newRoute)
         
         pathsToExplore = newTraces + pathsToExplore
-
-        iterations -= 1
 
     with open("tempOutput.yaml","w") as f:
         f.writelines(lines)
