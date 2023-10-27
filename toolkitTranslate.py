@@ -83,7 +83,7 @@ def getLineData(line, index, yamlData):
 
     return keyText, valueText, isList, isDict
 
-def processValueText(vt : str):
+def processValueText(vt : str, ignoreType):
 
     CONVERSIONS = {"False":"false","True":"true","None":"null"}
 
@@ -93,7 +93,7 @@ def processValueText(vt : str):
 
     if "{" in vt:
         
-        converted = dictPreProcess(vt)
+        converted = dictPreProcess(vt, ignoreType)
         type = "inlineDict"
 
     else:
@@ -112,9 +112,9 @@ def processValueText(vt : str):
         except:
             pass
     
-    return {"value":converted,"type":type}
+    return {"value":converted,"type":type} if not ignoreType else converted
 
-def dictPreProcess(dct : str):
+def dictPreProcess(dct : str, ignoreType):
 
     REPLACEMENTS = {"{":'{"',
                     ": ":'": "',
@@ -131,91 +131,97 @@ def dictPreProcess(dct : str):
     processedDict = {}
 
     for key, value in convertedDict.items():
-        processedDict[key] = processValueText(value)
+        processedDict[key] = processValueText(value, ignoreType)
 
     return processedDict
 
-yamlData = None
+def yamlToJson(filePath : str, ignoreTyping : bool = False):
+    yamlData = None
 
-levelData = LevelData()
+    levelData = LevelData()
 
-lastIndentLevel = 0
+    lastIndentLevel = 0
 
-indentKeys = {}
+    indentKeys = {}
 
-with open("TESTING.yaml","r") as f:
-    yamlData = f.readlines()
+    with open(filePath,"r") as f:
+        yamlData = f.readlines()
 
-for i, line in enumerate(yamlData): #21632 77 , line in enumerate(yamlData)
-    #line = yamlData[i]
+    for i, line in enumerate(yamlData): #21632 77 , line in enumerate(yamlData)
+        #line = yamlData[i]
 
-    leadingSpaces, indentLevel, firstCharacter = getIndentAndStartCharacter(line)
+        leadingSpaces, indentLevel, firstCharacter = getIndentAndStartCharacter(line)
 
-    newLine = line[leadingSpaces:len(line)]
+        newLine = line[leadingSpaces:len(line)]
 
-    itemCarry = False
+        itemCarry = False
 
-    if firstCharacter == "-":
-        #Is List Item
-        indentLevel += 1
+        if firstCharacter == "-":
+            #Is List Item
+            indentLevel += 1
 
-        if indentLevel < lastIndentLevel:
+            if indentLevel < lastIndentLevel:
+                
+                change = lastIndentLevel - indentLevel
+                levelData.removeTopStructure(indentLevel)
+
+            levelData.increaseIndexOfTopList()
+
+            itemData = line[line.find("- ")+2:]
+
+            curleyBracketIndex = itemData.find("{")
+
+            colonIndex = itemData.find(":")
+
+            bothExist = curleyBracketIndex != -1 and colonIndex != -1
             
-            change = lastIndentLevel - indentLevel
-            levelData.removeTopStructure(indentLevel)
-
-        levelData.increaseIndexOfTopList()
-
-        itemData = line[line.find("- ")+2:]
-
-        curleyBracketIndex = itemData.find("{")
-
-        colonIndex = itemData.find(":")
-
-        bothExist = curleyBracketIndex != -1 and colonIndex != -1
-        
-        if (":" in itemData and not bothExist) or (bothExist and (colonIndex < curleyBracketIndex)):
-            itemCarry = True
-        else:
-            if bothExist and (curleyBracketIndex < colonIndex):
-                itemData = {"value":dictPreProcess(itemData),"type":"inlineDict"}
+            if (":" in itemData and not bothExist) or (bothExist and (colonIndex < curleyBracketIndex)):
+                itemCarry = True
             else:
-                itemData = processValueText(itemData)
+                if bothExist and (curleyBracketIndex < colonIndex):
 
-            levelData.setDataInTopList(itemData)
-        
-    if firstCharacter != "-" or itemCarry:
+                    processedData = dictPreProcess(itemData, ignoreTyping)
 
-        lineData = newLine
+                    itemData = {"value":processedData,"type":"inlineDict"} if not ignoreTyping else processedData
+                else:
+                    itemData = processValueText(itemData,ignoreTyping)
 
-        if itemCarry:
-            lineData = itemData
+                levelData.setDataInTopList(itemData)
+            
+        if firstCharacter != "-" or itemCarry:
 
-        keyText, valueText, isList, isDict = getLineData(lineData, i, yamlData)
+            lineData = newLine
 
-        if indentLevel < lastIndentLevel and not itemCarry:
-            change = lastIndentLevel - indentLevel
+            if itemCarry:
+                lineData = itemData
 
-            levelData.removeTopStructure(indentLevel)
+            keyText, valueText, isList, isDict = getLineData(lineData, i, yamlData)
 
-        #22807
+            if indentLevel < lastIndentLevel and not itemCarry:
+                change = lastIndentLevel - indentLevel
 
-        # print(f"{keyText} : {repr(valueText)} :: IsList : {isList} IsDict : {isDict}")
+                levelData.removeTopStructure(indentLevel)
 
-        if not isList and not isDict:
-            levelData.getCurrentStructure()[keyText] = processValueText(valueText)
+            #22807
 
-        else:
+            # print(f"{keyText} : {repr(valueText)} :: IsList : {isList} IsDict : {isDict}")
 
-            indentKeys[indentLevel] = keyText
+            if not isList and not isDict:
+                levelData.getCurrentStructure()[keyText] = processValueText(valueText,ignoreTyping)
 
-            increase = 2 if isList else 1
+            else:
 
-            levelData.addStructure(keyText, isList, indentLevel+increase)
+                indentKeys[indentLevel] = keyText
 
-    lastIndentLevel = indentLevel
+                increase = 2 if isList else 1
+
+                levelData.addStructure(keyText, isList, indentLevel+increase)
+
+        lastIndentLevel = indentLevel
+    
+    return levelData.levelData
 
 with open("output.json","w") as f:
-    json.dump(levelData.levelData,f, indent=3)
+    json.dump(yamlToJson("TESTING.yaml",ignoreTyping=True),f, indent=3)
 
 #print(levelData.levelData)
