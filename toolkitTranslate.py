@@ -228,7 +228,36 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     
     return levelData.levelData
 
-def
+def parseValue(value, type):
+
+    CUSTOM_TYPES = ["!u","!l","!ul"]
+
+    if type in CUSTOM_TYPES:
+        return type + " " + str(value)
+    
+    if isinstance(value, float):
+        return f"{value:.5f}"
+    
+    if value == None:
+        return ""
+    
+    if value == "":
+        return "''"
+    
+    if isinstance(value, bool):
+        return str(value).lower()
+
+    if type == "inlineDict":
+        text = ""
+        vals = []
+        for key, val in value.items():
+            vals.append(key + ": " + str(parseValue(val["value"],val["type"])))
+        
+        text = "{" + ", ".join(vals) + "}"
+
+        return text
+    
+    return value
 
 def traceThrough(data, path):
     finalLocation = data
@@ -296,12 +325,14 @@ def jsonToYaml(filePath : str):
                 if isinstance(finalPointName,int):
                     text = "- "
 
+                valueText = parseValue(currentPoint['value'], currentPoint["type"])
+
                 if addLine:
                     
-                    lines.append(indentText + f"{text}{currentPoint['value']}\n")
+                    lines.append(indentText + f"{text}{valueText}\n")
 
             else:
-                text = f"{finalPointName}: \n"
+                text = f"{finalPointName}:\n"
 
                 #IF LIST
                 if isinstance(finalPointName,int):
@@ -319,7 +350,7 @@ def jsonToYaml(filePath : str):
         if isinstance(currentPoint, list):
             if addLine:
                 
-                lines.append(indentText + f"{finalPointName}: \n")
+                lines.append(indentText + f"{finalPointName}:\n")
             for i in range(0, len(currentPoint)):
                 newRoute = traceRoute + [i]
                 
@@ -327,19 +358,10 @@ def jsonToYaml(filePath : str):
         
         pathsToExplore = newTraces + pathsToExplore
 
-    with open("tempOutput.yaml","w") as f:
-        f.writelines(lines)
+    return lines
 
-    #Done
-
-        
-
-    #print(list(pathsToExplore.keys()))
-
-    with open("tempOutput.yaml","w") as f:
-        f.writelines(lines)
-    
-jsonToYaml("tempOutput.json")     
+with open("tempOutput.yaml","w") as f:
+    f.writelines(jsonToYaml("tempOutput.json"))
 
 # with open("output.json","w") as f:
 #     json.dump(yamlToJson("TESTING.yaml",ignoreTyping=False),f)
