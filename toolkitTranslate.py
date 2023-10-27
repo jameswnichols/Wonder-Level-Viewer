@@ -61,6 +61,10 @@ class LevelData:
     def setDataInTopList(self, data):
         self.getCurrentStructure(ignoreFinalIndex=True)[self.getTopStructure()["index"]] = data
 
+class JsonTrace:
+    def __init__(self):
+        pass
+
 def getIndentAndStartCharacter(line):
     leadingSpaces = len(line) - len(line.lstrip(' '))
 
@@ -224,8 +228,17 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     return levelData.levelData
 
 def jsonToYaml(filePath : str):
-    pass
+    
+    levelData = None
 
-with open("output.json","w") as f:
-    json.dump(yamlToJson("TESTING.yaml",ignoreTyping=True),f)
+    lines = []
+
+    with open(filePath,"r") as f:
+        levelData = json.load(f)
+
+    
+jsonToYaml("tempOutput.json")     
+
+# with open("output.json","w") as f:
+#     json.dump(yamlToJson("TESTING.yaml",ignoreTyping=False),f)
 
