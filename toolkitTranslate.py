@@ -228,14 +228,13 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     
     return levelData.levelData
 
+def
+
 def traceThrough(data, path):
     finalLocation = data
-    finalIndent = 0
     for trace in path:
-        index, indent = trace
-        finalIndent += indent
-        finalLocation = finalLocation[index]
-    return finalIndent, finalLocation
+        finalLocation = finalLocation[trace]
+    return finalLocation
 
 def jsonToYaml(filePath : str):
     
@@ -269,16 +268,20 @@ def jsonToYaml(filePath : str):
         
         traceRoute = pathsToExplore.pop(0)
 
-        pointIndent, currentPoint = traceThrough(levelData, traceRoute)
+        currentPoint = traceThrough(levelData, traceRoute)
 
         pointIndent = (len(traceRoute)-1) * 2
+
+        prevLineNewline = True if len(lines) == 0 else lines[-1].endswith("\n")
+
+        indentText = "" if not prevLineNewline else " " * pointIndent
 
         newTraces = []
 
         addLine = True
 
         try:
-            finalPointName = traceRoute[-1][0]
+            finalPointName = traceRoute[-1]
         except:
             addLine = False
             finalPointName = ""
@@ -295,7 +298,7 @@ def jsonToYaml(filePath : str):
 
                 if addLine:
                     
-                    lines.append(" "*pointIndent + f"{text}{currentPoint['value']}\n")
+                    lines.append(indentText + f"{text}{currentPoint['value']}\n")
 
             else:
                 text = f"{finalPointName}: \n"
@@ -305,20 +308,20 @@ def jsonToYaml(filePath : str):
                     text = "- "
 
                 if addLine:
-                    lines.append(" "*pointIndent + text)
+                    lines.append(indentText + text)
 
                 for key, value in currentPoint.items():
                     
-                    newRoute = traceRoute + [(key,pointIndent+2)]
+                    newRoute = traceRoute + [key]
 
                     newTraces.append(newRoute)
         
         if isinstance(currentPoint, list):
             if addLine:
                 
-                lines.append(" "*pointIndent + f"{finalPointName}: \n")
+                lines.append(indentText + f"{finalPointName}: \n")
             for i in range(0, len(currentPoint)):
-                newRoute = traceRoute + [(i,pointIndent)]
+                newRoute = traceRoute + [i]
                 
                 newTraces.append(newRoute)
         
