@@ -236,6 +236,42 @@ def jsonToYaml(filePath : str):
     with open(filePath,"r") as f:
         levelData = json.load(f)
 
+    pathsToExplore = {0:levelData}
+
+    while pathsToExplore:
+
+        firstKey = list(pathsToExplore.keys())[0]
+
+        currentPath = pathsToExplore.pop(firstKey)
+
+        if isinstance(currentPath, dict):
+            for key, value in currentPath.items():
+                if "value" in value and "type" in value:
+                    lines.append(f"{key}: {value['value']}\n")
+                    #print(f"{key}={value['value']}")
+                else:
+                    #print(f"Path for {key}")
+                    pathsToExplore[key] = currentPath[key]
+        
+        elif isinstance(currentPath, list):
+            for i, value in enumerate(currentPath):
+
+                if isinstance(value, dict):
+                    if "value" in value and "type" in value:
+                        lines.append(f"{firstKey}[{i}]: {value['value']}\n")
+                        #print(f"{firstKey}[{i}]={value['value']}")
+                    else:
+                        #print(f"Path for {firstKey}[{i}]")
+                        pathsToExplore[f"{firstKey}[{i}]"] = currentPath[i]
+                else:
+                    #print(f"Path for {firstKey}[{i}]")
+                    pathsToExplore[f"{firstKey}[{i}]"] = currentPath[i]
+
+    #print(list(pathsToExplore.keys()))
+
+    with open("tempOutput.yaml","w") as f:
+        f.writelines(lines)
+
     
 jsonToYaml("tempOutput.json")     
 
