@@ -223,6 +223,9 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     
     return levelData.levelData
 
+def jsonToYaml(filePath : str):
+    pass
+
 with open("output.json","w") as f:
     json.dump(yamlToJson("TESTING.yaml",ignoreTyping=True),f)
 
