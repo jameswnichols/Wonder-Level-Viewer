@@ -231,10 +231,9 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
 def traceThrough(data, path):
     finalLocation = data
     indent = 0
-    for indentIncrease, trace in path:
-        indentIncrease += indentIncrease
+    for trace in path:
         finalLocation = finalLocation[trace]
-    return indent, finalLocation
+    return finalLocation
 
 def jsonToYaml(filePath : str):
     
@@ -270,7 +269,7 @@ def jsonToYaml(filePath : str):
         
         traceRoute = pathsToExplore.pop(0)
 
-        indent, currentPoint = traceThrough(levelData, traceRoute)
+        currentPoint = traceThrough(levelData, traceRoute)
 
         newTraces = []
 
