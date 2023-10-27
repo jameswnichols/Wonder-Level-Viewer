@@ -1,6 +1,7 @@
 import pygame
 import math
 import json
+import toolkitTranslate
 
 def distanceBetween(c1, c2):
     return math.sqrt((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2)
@@ -360,7 +361,7 @@ while running:
     
     #Runs if no file is selected
     else:
-        prompt = FONT[15].render("Drag and drop (...).json file here to open",False, (255,255,255))
+        prompt = FONT[15].render("Drag and drop (...).yaml file here to open",False, (255,255,255))
 
         promptX, promptY = SCREEN_WIDTH//2 - prompt.get_width()//2, SCREEN_HEIGHT//2 - prompt.get_height()//2
 
@@ -432,10 +433,10 @@ while running:
 
         if event.type == pygame.DROPFILE:
             filepath = event.file
-            if filepath.split(".")[-1] == "json":
+            if filepath.split(".")[-1] == "yaml":
                 try:
-                    with open(filepath,"r") as f:
-                        levelData = json.load(f)
+                    #with open(filepath,"r") as f:
+                    levelData = toolkitTranslate.yamlToJson(filepath, True)
 
                     objectCache = generateObjectCache(levelData)
 
