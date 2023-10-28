@@ -1,4 +1,5 @@
 import json
+import random
 
 #5 places of float precision.
 #!u - Unsigned int(?)
@@ -61,6 +62,10 @@ class LevelData:
     def setDataInTopList(self, data):
         self.getCurrentStructure(ignoreFinalIndex=True)[self.getTopStructure()["index"]] = data
 
+class JsonTrace:
+    def __init__(self):
+        pass
+
 def getIndentAndStartCharacter(line):
     leadingSpaces = len(line) - len(line.lstrip(' '))
 
@@ -97,6 +102,11 @@ def processValueText(vt : str, ignoreType):
         
         converted = dictPreProcess(vt, ignoreType)
         type = "inlineDict"
+
+    if vt[0] == "[":
+
+        converted = listPreProcess(vt, ignoreType)
+        type = "inlineList"
 
     else:
         if "!" in stripped:
@@ -143,6 +153,17 @@ def dictPreProcess(dct : str, ignoreType):
 
     return processedDict
 
+def listPreProcess(list : str, ignoreType):
+
+    convertedList = json.loads(list.rstrip())
+
+    processedList = []
+
+    for value in convertedList:
+        processedList.append(processValueText(value, ignoreType))
+
+    return processedList
+
 def yamlToJson(filePath : str, ignoreTyping : bool = False):
     yamlData = None
 
@@ -154,6 +175,8 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
 
     with open(filePath,"r") as f:
         yamlData = f.readlines()
+
+    #yamlData = filePreProcess(yamlData)
 
     for i, line in enumerate(yamlData):
 
@@ -223,6 +246,167 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     
     return levelData.levelData
 
-with open("output.json","w") as f:
-    json.dump(yamlToJson("TESTING.yaml",ignoreTyping=True),f)
+def parseValue(value, type):
 
+    CUSTOM_TYPES = ["!u","!l","!ul"]
+
+    if type in CUSTOM_TYPES:
+        return type + " " + str(value)
+    
+    if isinstance(value, float):
+        return f"{value:.5f}"
+    
+    if value == None:
+        return ""
+    
+    if value == "":
+        return "''"
+    
+    if isinstance(value, bool):
+        return str(value).lower()
+
+    if type == "inlineDict":
+        text = ""
+        vals = []
+        for key, val in value.items():
+            vals.append(key + ": " + str(parseValue(val["value"],val["type"])))
+        
+        text = "{" + ", ".join(vals) + "}"
+
+        return text
+    
+    return value
+
+def traceThrough(data, path):
+    finalLocation = data
+    for trace in path:
+        finalLocation = finalLocation[trace]
+    return finalLocation
+
+def jsonToYaml(filePath : str):
+    
+    levelData = None
+
+    lines = []
+
+    #["root","Actors",0,"Dynamic","InitDir"]
+    #["root","Actors",0,"Dynamic"]
+    #["root","Actors",0,"AreaHash"]
+    #["root","Actors"]
+    #...
+    #["root","ActorToRailLinks",1]
+    #["root","ActorToRailLinks",0]
+    #["root","ActorToRailLinks"]
+    #["root"]
+    #["HasReferenceNodes"]
+    #["SupportPaths"]
+    #["IsBigEndian"]
+    #["Version"]
+    #Pop from the bottom
+
+    with open(filePath,"r") as f:
+        levelData = json.load(f)
+
+    pathsToExplore = [[]]
+
+    lines = []
+
+    while pathsToExplore:
+        
+        traceRoute = pathsToExplore.pop(0)
+
+        currentPoint = traceThrough(levelData, traceRoute)
+
+        pointIndent = (len(traceRoute)-1) * 2
+
+        prevLineNewline = True if len(lines) == 0 else lines[-1].endswith("\n")
+
+        indentText = "" if not prevLineNewline else " " * pointIndent
+
+        newTraces = []
+
+        addLine = True
+
+        try:
+            finalPointName = traceRoute[-1]
+        except:
+            addLine = False
+            finalPointName = ""
+
+        if isinstance(currentPoint, dict):
+
+            pointKeys = list(currentPoint.keys())
+
+            if "value" in pointKeys and "type" in pointKeys:
+                #HANDLE ASSIGNMENT
+                text = f"{finalPointName}: "
+                if isinstance(finalPointName,int):
+                    text = "- "
+
+                valueText = parseValue(currentPoint['value'], currentPoint["type"])
+
+                if addLine:
+                    
+                    lines.append(indentText + f"{text}{valueText}\n")
+
+            else:
+                text = f"{finalPointName}:\n"
+
+                #IF LIST
+                if isinstance(finalPointName,int):
+                    text = "- "
+
+                if addLine:
+                    lines.append(indentText + text)
+
+                for key, value in currentPoint.items():
+                    
+                    newRoute = traceRoute + [key]
+
+                    newTraces.append(newRoute)
+        
+        if isinstance(currentPoint, list):
+            if addLine:
+                
+                lines.append(indentText + f"{finalPointName}:\n")
+            for i in range(0, len(currentPoint)):
+                newRoute = traceRoute + [i]
+                
+                newTraces.append(newRoute)
+        
+        pathsToExplore = newTraces + pathsToExplore
+
+    for i in range(0, 4):
+        if ": false" in lines[i]:
+            lines[i] = lines[i].replace(": false",": False")
+
+        if ": true" in lines[i]:
+            lines[i] = lines[i].replace(": true",": True")
+
+    return lines
+
+def filePreProcess(lines : list[str]):
+
+    yamlData = lines
+
+    newLines = []
+
+    needToStackBracket = False
+
+    for line in yamlData:
+        if (("{" in line and "}" not in line) or ("[" in line and "]" not in line)) and not needToStackBracket:
+            needToStackBracket = True
+            newLines.append(line)
+        elif needToStackBracket and ("}" in line or "]" in line):
+            needToStackBracket = False
+            newLines[-1] = newLines[-1].rstrip() + " " + line.lstrip()
+        elif needToStackBracket:
+            newLines[-1] = newLines[-1].rstrip() + " " + line.lstrip()
+        else:
+            newLines.append(line)
+    
+    return newLines
+
+#filePreProcess("Course001_Main.yaml")
+# with open("Course1BackToYaml.yaml","w") as f:
+#     f.writelines(jsonToYaml("Course1Json.json"))
