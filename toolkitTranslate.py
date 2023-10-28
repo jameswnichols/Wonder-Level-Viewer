@@ -408,9 +408,5 @@ def filePreProcess(lines : list[str]):
     return newLines
 
 #filePreProcess("Course001_Main.yaml")
-
-with open("Course1NewYaml.json","w") as f:
-     json.dump(yamlToJson("Course001_Main.yaml", False),f,indent=3)
-
 # with open("Course1BackToYaml.yaml","w") as f:
 #     f.writelines(jsonToYaml("Course1Json.json"))
