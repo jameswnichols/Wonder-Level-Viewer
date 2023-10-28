@@ -103,6 +103,11 @@ def processValueText(vt : str, ignoreType):
         converted = dictPreProcess(vt, ignoreType)
         type = "inlineDict"
 
+    if vt[0] == "[":
+
+        converted = listPreProcess(vt, ignoreType)
+        type = "inlineList"
+
     else:
         if "!" in stripped:
             type = stripped[:stripped.find(" ")]
@@ -148,6 +153,17 @@ def dictPreProcess(dct : str, ignoreType):
 
     return processedDict
 
+def listPreProcess(list : str, ignoreType):
+
+    convertedList = json.loads(list.rstrip())
+
+    processedList = []
+
+    for value in convertedList:
+        processedList.append(processValueText(value, ignoreType))
+
+    return processedList
+
 def yamlToJson(filePath : str, ignoreTyping : bool = False):
     yamlData = None
 
@@ -160,7 +176,7 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     with open(filePath,"r") as f:
         yamlData = f.readlines()
 
-    yamlData = filePreProcess(yamlData)
+    #yamlData = filePreProcess(yamlData)
 
     for i, line in enumerate(yamlData):
 
@@ -383,18 +399,18 @@ def filePreProcess(lines : list[str]):
             newLines.append(line)
         elif needToStackBracket and ("}" in line or "]" in line):
             needToStackBracket = False
-            newLines[-1] = newLines[-1].rstrip() + line.lstrip()
+            newLines[-1] = newLines[-1].rstrip() + " " + line.lstrip()
         elif needToStackBracket:
-            newLines[-1] = newLines[-1].rstrip() + line.lstrip()
+            newLines[-1] = newLines[-1].rstrip() + " " + line.lstrip()
         else:
             newLines.append(line)
     
     return newLines
 
-filePreProcess("Course001_Main.yaml")
+#filePreProcess("Course001_Main.yaml")
 
-# with open("Course1Json.json","w") as f:
-#     json.dump(yamlToJson("BACKUP.yaml", False),f,indent=3)
+with open("Course1NewYaml.json","w") as f:
+     json.dump(yamlToJson("Course001_Main.yaml", False),f,indent=3)
 
 # with open("Course1BackToYaml.yaml","w") as f:
 #     f.writelines(jsonToYaml("Course1Json.json"))
