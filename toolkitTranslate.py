@@ -160,6 +160,8 @@ def yamlToJson(filePath : str, ignoreTyping : bool = False):
     with open(filePath,"r") as f:
         yamlData = f.readlines()
 
+    yamlData = filePreProcess(yamlData)
+
     for i, line in enumerate(yamlData):
 
         leadingSpaces, indentLevel, firstCharacter = getIndentAndStartCharacter(line)
@@ -367,5 +369,32 @@ def jsonToYaml(filePath : str):
 
     return lines
 
+def filePreProcess(lines : list[str]):
 
+    yamlData = lines
 
+    newLines = []
+
+    needToStackBracket = False
+
+    for line in yamlData:
+        if (("{" in line and "}" not in line) or ("[" in line and "]" not in line)) and not needToStackBracket:
+            needToStackBracket = True
+            newLines.append(line)
+        elif needToStackBracket and ("}" in line or "]" in line):
+            needToStackBracket = False
+            newLines[-1] = newLines[-1].rstrip() + line.lstrip()
+        elif needToStackBracket:
+            newLines[-1] = newLines[-1].rstrip() + line.lstrip()
+        else:
+            newLines.append(line)
+    
+    return newLines
+
+filePreProcess("Course001_Main.yaml")
+
+# with open("Course1Json.json","w") as f:
+#     json.dump(yamlToJson("BACKUP.yaml", False),f,indent=3)
+
+# with open("Course1BackToYaml.yaml","w") as f:
+#     f.writelines(jsonToYaml("Course1Json.json"))
