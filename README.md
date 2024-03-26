@@ -4,3 +4,7 @@ A WIP 2D, now defunct, level viewer for Super Mario Wonder. Can view a level by 
 ### Features:
 - Can view a basic layout of every level in the game.
 - Can view the connections between objects, with lines representing different connection methods.
+
+### Requirements:
+Only one pip module is needed:
+- `pip install pygame-ce`.
